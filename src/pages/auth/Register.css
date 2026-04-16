@@ -38,6 +38,44 @@
   height: auto;
 }
 
+.form {
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Space between rows */
+  font-family: Arial, sans-serif;
+}
+
+.row {
+  display: flex;
+  gap: 15px; /* Space between First and Last name */
+}
+
+input {
+  padding: 12px 15px;
+  border: 2px solid var(--dark_grey);
+  border-radius: 12px;
+  font-size: 16px;
+  color: var(--black);
+  outline: none;
+  background-color: transparent;
+}
+
+/* Placeholder text color */
+input::placeholder {
+  color: var(--dark_grey);
+}
+
+.half-width {
+  flex: 1; /* Makes both inputs take up 50% of the row */
+  width: 0; /* Prevents overflow */
+}
+
+.full-width {
+  width: 100%;
+  box-sizing: border-box; /* Ensures padding doesn't affect width */
+}
+
 .btn {
   background-color: var(--steel_blue);
   color: white;
