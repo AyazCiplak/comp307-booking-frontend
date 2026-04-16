@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Helvetica", sans-serif; /* Or your preferred sans-serif font */
+  font-family: "Helvetica", sans-serif;
   padding: 20px;
 }
 
@@ -21,7 +21,7 @@
 }
 
 .title {
-  color: var();
+  color: var(--dark_red);
   font-size: 5rem;
   line-height: 0.9;
   margin: 0;
@@ -35,7 +35,7 @@
 }
 
 .description {
-  color: var(--text-dark);
+  color: var(--text);
   font-size: 1.1rem;
   line-height: 1.6;
   margin-bottom: 40px;
@@ -54,12 +54,16 @@
   background-color: var(--steel_blue);
   color: white;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 15px 60px;
   border-radius: 8px;
   font-size: 1.2rem;
   cursor: pointer;
   transition: opacity 0.2s ease;
   min-width: 200px;
+  text-decoration: none;
 }
 
 .btn:hover {

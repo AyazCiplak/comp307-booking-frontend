@@ -1,4 +1,5 @@
 import logo from "../public/logo.png";
+import { Link } from "react-router-dom";
 import "./Landing.css";
 
 function Landing() {
@@ -31,7 +32,9 @@ function Landing() {
         {/* action buttons */}
         <div className="button-group">
           <button className="btn">Log In</button>
-          <button className="btn">Register</button>
+          <Link to="/auth/register" className="btn">
+            Register
+          </Link>
         </div>
       </main>
     </div>
