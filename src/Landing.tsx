@@ -31,7 +31,9 @@ function Landing() {
 
         {/* action buttons */}
         <div className="button-group">
-          <button className="btn">Log In</button>
+          <Link to="/auth/login" className="btn">
+            Log In
+          </Link>
           <Link to="/auth/register" className="btn">
             Register
           </Link>
