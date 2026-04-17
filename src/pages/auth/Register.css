@@ -93,6 +93,18 @@
   width: 100%;
 }
 
+.already-have-account {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--steel_blue);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.already-have-account:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 600px) {
   .register-page {
     padding: 12px 16px 28px;

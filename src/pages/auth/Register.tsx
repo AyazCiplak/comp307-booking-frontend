@@ -1,4 +1,5 @@
 import "./Register.css";
+import { Link } from "react-router-dom";
 
 function Register() {
   return (
@@ -42,6 +43,14 @@ function Register() {
               placeholder="Password"
               className="register-full-width"
             />
+
+            <Link to="/auth/login" className="already-have-account">
+              Already have an account? Log in
+            </Link>
+
+            <Link to="/" className="btn">
+              Register
+            </Link>
           </div>
         </section>
       </main>
