@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import "./Register.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ALLOWED_EMAIL_DOMAINS = ["mcgill.ca", "mail.mcgill.ca"];
 
@@ -15,6 +15,7 @@ function isInstitutionalEmail(email: string) {
 }
 
 function Register() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -46,7 +47,9 @@ function Register() {
     setShowValidationError(false);
     setInvalidEmailError(false);
 
-    // continue with auth API call
+    // include auth API call HERE
+
+    navigate("/public/dashboard");
   }
 
   return (

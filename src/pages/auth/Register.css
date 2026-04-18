@@ -129,6 +129,7 @@
 
 .register-submit-btn:hover {
   opacity: 0.9;
+  text-decoration: underline;
 }
 
 @media (max-width: 600px) {
