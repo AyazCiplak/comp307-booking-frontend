@@ -3,12 +3,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Helvetica", sans-serif; /* Or your preferred sans-serif font */
-  padding: 20px;
+  font-family: "Helvetica", sans-serif;
+  padding: 32px 24px;
 }
 
 .card {
-  max-width: 800px;
+  width: min(980px, 100%);
   text-align: center;
 }
 
@@ -16,12 +16,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 40px;
-  margin-bottom: 30px;
+  gap: 28px;
+  margin-bottom: 22px;
 }
 
 .title {
-  color: var();
+  color: var(--dark_red);
   font-size: 5rem;
   line-height: 0.9;
   margin: 0;
@@ -30,16 +30,16 @@
 }
 
 .logo {
-  width: 350px;
+  width: 320px;
   height: auto;
 }
 
 .description {
-  color: var(--text-dark);
+  color: var(--text);
   font-size: 1.1rem;
-  line-height: 1.6;
-  margin-bottom: 40px;
-  max-width: 90%;
+  line-height: 1.5;
+  margin-bottom: 34px;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
 }
@@ -54,12 +54,16 @@
   background-color: var(--steel_blue);
   color: white;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 15px 60px;
   border-radius: 8px;
   font-size: 1.2rem;
   cursor: pointer;
   transition: opacity 0.2s ease;
   min-width: 200px;
+  text-decoration: none;
 }
 
 .btn:hover {
