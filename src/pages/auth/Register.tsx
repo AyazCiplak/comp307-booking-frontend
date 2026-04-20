@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Button from "../../components/ui/Button";
 
 // Shared Tailwind class string for all text inputs in this form.
 // Defined once here so every <input> stays visually consistent.
@@ -153,12 +154,10 @@ function Register() {
             </Link>
 
             {/* Submit */}
-            <button
-              type="submit"
-              className="self-center bg-steel-blue text-white border-0 rounded-[18px] py-[14px] px-[52px] text-[2rem] min-w-[220px] cursor-pointer transition-opacity duration-200 hover:opacity-90 hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]"
-            >
+            <Button type="submit" size="xl" className="self-center hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]">
               Register
-            </button>
+            </Button>
+
           </form>
         </section>
 

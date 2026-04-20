@@ -2,7 +2,7 @@ interface ButtonProps {
   children: React.ReactNode;
   type?: "button" | "submit" | "reset";
   variant?: "primary" | "secondary" | "danger" | "ghost";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   onClick?: () => void;
   disabled?: boolean;
   className?: string;
@@ -35,6 +35,7 @@ const Button = ({
     sm: "px-3 py-1.5 text-sm",
     md: "px-4 py-2 text-base",
     lg: "px-6 py-3 text-lg",
+    xl: "px-[52px] py-[14px] text-[2rem] rounded-[18px] min-w-[220px]"
   };
 
   return (
