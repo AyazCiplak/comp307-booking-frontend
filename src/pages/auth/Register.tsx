@@ -60,14 +60,22 @@ function Register() {
   return (
     <div className="min-h-screen flex items-start justify-start px-7 pt-[18px] pb-10 box-border font-[Helvetica,sans-serif]">
       <main className="w-full max-w-[1240px] text-left">
-
         {/* Header — logo + app name */}
         <div className="flex items-center justify-start gap-[18px]">
-          <img src="/logo.png" alt="BookSoCS Logo" className="w-[190px] h-auto max-sm:w-[120px]" />
+          <img
+            src="/logo.png"
+            alt="BookSoCS Logo"
+            className="w-[190px] h-auto max-sm:w-[120px]"
+          />
           <h1 className="text-dark-red text-[2.5rem] leading-[0.95] m-0 font-extrabold text-left max-sm:text-[2.8rem]">
             Book SoCS
           </h1>
         </div>
+
+        {/* Title */}
+        <h1 className="text-[1.8rem] text-dark-red mt-4 max-sm:text-[1.6rem] justify-center align-center flex">
+          Make an account
+        </h1>
 
         {/* Form shell */}
         <section className="mt-[50px] w-full flex justify-center max-sm:mt-8">
@@ -104,7 +112,10 @@ function Register() {
                 className={`${INPUT_CLS} flex-1 min-w-0 max-sm:w-full`}
                 value={formData.firstName}
                 onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, firstName: e.target.value }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    firstName: e.target.value,
+                  }));
                   if (showValidationError) setShowValidationError(false);
                 }}
               />
@@ -114,7 +125,10 @@ function Register() {
                 className={`${INPUT_CLS} flex-1 min-w-0 max-sm:w-full`}
                 value={formData.lastName}
                 onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, lastName: e.target.value }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    lastName: e.target.value,
+                  }));
                   if (showValidationError) setShowValidationError(false);
                 }}
               />
@@ -154,13 +168,15 @@ function Register() {
             </Link>
 
             {/* Submit */}
-            <Button type="submit" size="xl" className="self-center hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]">
+            <Button
+              type="submit"
+              size="lg"
+              className="self-center hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]"
+            >
               Register
             </Button>
-
           </form>
         </section>
-
       </main>
     </div>
   );
