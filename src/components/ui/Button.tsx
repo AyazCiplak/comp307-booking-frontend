@@ -1,7 +1,8 @@
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  type?: "button" | "submit" | "reset";
+  variant?: "primary" | "secondary" | "danger" | "ghost";
+  size?: "sm" | "md" | "lg" | "xl";
   onClick?: () => void;
   disabled?: boolean;
   className?: string;
@@ -9,21 +10,24 @@ interface ButtonProps {
 
 const Button = ({
   children,
-  variant = 'primary',
-  size = 'md',
+  type = "button",
+  variant = "primary",
+  size = "md",
   onClick,
   disabled = false,
-  className = ''
+  className = "",
 }: ButtonProps) => {
-  const baseStyles = "font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center border-0 cursor-pointer";
+  const baseStyles =
+    "font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center border-0 cursor-pointer";
 
   const variants = {
-    // "Primary" matches styling of Rhea's currently-styled buttons
+    // Main action — steel blue (#507DA7), matches existing site buttons
     primary:   "bg-steel-blue   text-white hover:opacity-90 focus:ring-steel-blue",
+    // Secondary action — light blue (#629DFC)
     secondary: "bg-light-blue   text-white hover:opacity-90 focus:ring-light-blue",
-    // "Danger" used for "destructive" actions e.g. delete booking slot
+    // Destructive action — dark red (#BD271D)
     danger:    "bg-dark-red     text-white hover:opacity-90 focus:ring-dark-red",
-    // "Ghost" is a minimal "transparent" button that turns grey on hover
+    // Minimal / tertiary — no background, dark grey text, light grey hover
     ghost:     "bg-transparent  text-dark-grey hover:bg-light-grey focus:ring-dark-grey",
   };
 
@@ -31,10 +35,12 @@ const Button = ({
     sm: "px-3 py-1.5 text-sm",
     md: "px-4 py-2 text-base",
     lg: "px-6 py-3 text-lg",
+    xl: "px-[52px] py-[14px] text-[2rem] rounded-[18px] min-w-[220px]"
   };
 
   return (
     <button
+      type={type}
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       onClick={onClick}
       disabled={disabled}
