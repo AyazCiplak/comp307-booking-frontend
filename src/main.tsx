@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
-import Landing from "./Landing.tsx";
+import Landing from "./pages/public/Landing.tsx";
 import Register from "./pages/auth/Register.tsx";
 import AuthLayout from "./pages/shared/AuthLayout.tsx";
 import Dashboard from "./pages/shared/Dashboard.tsx";

@@ -1,7 +1,13 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import "./Register.css";
 import { Link, useNavigate } from "react-router-dom";
+
+// Shared Tailwind class string for all text inputs in this form.
+// Defined once here so every <input> stays visually consistent.
+const INPUT_CLS =
+  "py-[15px] px-4 border-[3px] border-dark-grey rounded-xl text-[1.05rem] " +
+  "outline-none bg-transparent placeholder:text-dark-grey " +
+  "focus:border-steel-blue transition-colors duration-200 box-border";
 
 const ALLOWED_EMAIL_DOMAINS = ["mcgill.ca", "mail.mcgill.ca"];
 
@@ -10,7 +16,6 @@ function isInstitutionalEmail(email: string) {
   const [localPart, domainPart] = normalizedEmail.split("@");
   const localPartValid = /^[a-z0-9._%+-]+$/.test(localPart ?? "");
   const mcgillDomain = ALLOWED_EMAIL_DOMAINS.includes(domainPart ?? "");
-
   return localPartValid && mcgillDomain;
 }
 
@@ -47,118 +52,116 @@ function Register() {
     setShowValidationError(false);
     setInvalidEmailError(false);
 
-    // include auth API call HERE
-
-    navigate("/public/dashboard");
+    // TODO: replace with real auth API call when backend is connected
+    navigate("/dashboard");
   }
 
   return (
-    <div className="register-page">
-      <main className="register-layout">
-        {/* title and logo */}
-        <div className="register-header">
-          <div className="register-illustration">
-            <img
-              src="/logo.png"
-              alt="BookSoCS Logo"
-              className="register-logo"
-            />
-          </div>
-          <h1 className="register-title">Book SoCS</h1>
+    <div className="min-h-screen flex items-start justify-start px-7 pt-[18px] pb-10 box-border font-[Helvetica,sans-serif]">
+      <main className="w-full max-w-[1240px] text-left">
+
+        {/* Header — logo + app name */}
+        <div className="flex items-center justify-start gap-[18px]">
+          <img src="/logo.png" alt="BookSoCS Logo" className="w-[190px] h-auto max-sm:w-[120px]" />
+          <h1 className="text-dark-red text-[2.5rem] leading-[0.95] m-0 font-extrabold text-left max-sm:text-[2.8rem]">
+            Book SoCS
+          </h1>
         </div>
 
-        {/* registration form */}
-        <section className="register-form-shell">
-          <form className="register-form" onSubmit={handleSubmit}>
-            <h2 className="register-form-title">Register</h2>
+        {/* Form shell */}
+        <section className="mt-[50px] w-full flex justify-center max-sm:mt-8">
+          <form
+            className="w-[min(450px,100%)] flex flex-col gap-5"
+            onSubmit={handleSubmit}
+          >
+            {/* Visually hidden heading for screen readers */}
+            <h2 className="sr-only">Register</h2>
 
+            {/* Error banners */}
             {showValidationError && (
-              <div className="register-error-banner" role="alert">
+              <div
+                className="bg-[#e9b9b6] text-[#3a1f1f] rounded-2xl px-[22px] py-[18px] text-[1.05rem] leading-[1.3]"
+                role="alert"
+              >
                 Error: Please fill out all fields before registering.
               </div>
             )}
-
             {invalidEmailError && (
-              <div className="register-error-banner" role="alert">
+              <div
+                className="bg-[#e9b9b6] text-[#3a1f1f] rounded-2xl px-[22px] py-[18px] text-[1.05rem] leading-[1.3]"
+                role="alert"
+              >
                 Error: Please use your McGill Email.
               </div>
             )}
 
-            <div className="register-row">
+            {/* First + Last name row */}
+            <div className="flex gap-[15px] max-sm:flex-col max-sm:gap-5">
               <input
                 type="text"
                 placeholder="First Name"
-                className="register-half-width"
+                className={`${INPUT_CLS} flex-1 min-w-0 max-sm:w-full`}
                 value={formData.firstName}
-                onChange={(event) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    firstName: event.target.value,
-                  }));
-                  if (showValidationError) {
-                    setShowValidationError(false);
-                  }
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, firstName: e.target.value }));
+                  if (showValidationError) setShowValidationError(false);
                 }}
               />
               <input
                 type="text"
                 placeholder="Last Name"
-                className="register-half-width"
+                className={`${INPUT_CLS} flex-1 min-w-0 max-sm:w-full`}
                 value={formData.lastName}
-                onChange={(event) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    lastName: event.target.value,
-                  }));
-                  if (showValidationError) {
-                    setShowValidationError(false);
-                  }
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, lastName: e.target.value }));
+                  if (showValidationError) setShowValidationError(false);
                 }}
               />
             </div>
+
+            {/* Email */}
             <input
               type="email"
               placeholder="McGill Email"
-              className="register-full-width"
+              className={`${INPUT_CLS} w-full`}
               value={formData.email}
-              onChange={(event) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  email: event.target.value,
-                }));
-                if (showValidationError) {
-                  setShowValidationError(false);
-                }
-                if (invalidEmailError) {
-                  setInvalidEmailError(false);
-                }
+              onChange={(e) => {
+                setFormData((prev) => ({ ...prev, email: e.target.value }));
+                if (showValidationError) setShowValidationError(false);
+                if (invalidEmailError) setInvalidEmailError(false);
               }}
             />
+
+            {/* Password */}
             <input
               type="password"
               placeholder="Password"
-              className="register-full-width"
+              className={`${INPUT_CLS} w-full`}
               value={formData.password}
-              onChange={(event) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  password: event.target.value,
-                }));
-                if (showValidationError) {
-                  setShowValidationError(false);
-                }
+              onChange={(e) => {
+                setFormData((prev) => ({ ...prev, password: e.target.value }));
+                if (showValidationError) setShowValidationError(false);
               }}
             />
 
-            <Link to="/auth/login" className="already-have-account">
+            {/* Already have an account */}
+            <Link
+              to="/auth/login"
+              className="inline-block mt-3 text-steel-blue no-underline text-[0.95rem] hover:underline"
+            >
               Already have an account? Log in
             </Link>
 
-            <button type="submit" className="register-submit-btn">
+            {/* Submit */}
+            <button
+              type="submit"
+              className="self-center bg-steel-blue text-white border-0 rounded-[18px] py-[14px] px-[52px] text-[2rem] min-w-[220px] cursor-pointer transition-opacity duration-200 hover:opacity-90 hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]"
+            >
               Register
             </button>
           </form>
         </section>
+
       </main>
     </div>
   );
