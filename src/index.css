@@ -1,3 +1,18 @@
+@import "tailwindcss";
+
+/* 
+COLOUR PALETTE COLOURS, as Tailwind utility classes. 
+
+These can be applied using their direct acronyms within TypeScript code. 
+*/
+@theme {
+  --color-steel-blue: #507da7;
+  --color-light-blue: #629dfc;
+  --color-dark-red:   #bd271d;
+  --color-dark-grey:  #8e8e8e;
+  --color-light-grey: #e0e0e0;
+}
+
 :root {
   --black: #000000;
   --white: #ffffff;
@@ -27,6 +42,10 @@
   @media (max-width: 1024px) {
     font-size: 16px;
   }
+}
+
+* {
+  box-sizing: border-box;
 }
 
 #root {
