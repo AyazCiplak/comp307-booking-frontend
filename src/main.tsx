@@ -9,6 +9,7 @@ import AuthLayout from "./pages/shared/AuthLayout.tsx";
 import Dashboard from "./pages/shared/Dashboard.tsx";
 import Temp from "./pages/public/temp/Temp.tsx";
 import Login from "./pages/auth/Login.tsx";
+import CreateSlot from "./pages/shared/owner/CreateSlot.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -25,6 +26,7 @@ createRoot(document.getElementById("root")!).render(
           {/* Authenticated routes — Navbar rendered automatically via AuthLayout */}
           <Route element={<AuthLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/owner/create-slot" element={<CreateSlot />} />
             {/* Future owner-only pages (e.g. /owner/create-slot) will go here */}
           </Route>
 
