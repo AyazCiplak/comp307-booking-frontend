@@ -5,7 +5,7 @@ import "./CalendarComponent.css";
 
 const REFERENCE_YEAR = 2026;
 const REFERENCE_MONTH_INDEX = 3;
-const REFERENCE_SELECTED_DAY = 15;
+const REFERENCE_SELECTED_DAY = 21; //also will set these to TODAY when we have backend
 const AVAILABLE_DAYS = new Set([12, 13, 16, 17, 29, 30]); //days that already have bookings, need to update this when we have backend integration
 
 function isSameDay(a: Date, b: Date) {
@@ -22,7 +22,7 @@ function CalendarComponent() {
   );
 
   const tileClassName: CalendarProps["tileClassName"] = ({ date, view }) => {
-    // switching between month/year/decade views 
+    // switching between month/year/decade views
     if (view === "month") {
       const isReferenceMonth =
         date.getFullYear() === REFERENCE_YEAR &&
