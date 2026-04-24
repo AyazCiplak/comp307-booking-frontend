@@ -97,7 +97,7 @@ export interface PendingRequest {
   requesterId: string;
   requesterName: string;
   requesterEmail: string;
-  ownerId: string;
+  ownerId: string; // Will likely be the same as ownerEmail 
   ownerName: string;
   ownerEmail: string;
   requestedDate: Date;
