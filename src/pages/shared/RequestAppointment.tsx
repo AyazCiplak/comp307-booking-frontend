@@ -33,18 +33,17 @@ function RequestAppointment() {
   const ownerEmail = `${ownerUsername}@mcgill.ca`;
   const owner = mockOwners.find((o) => o.email === ownerEmail);
 
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  // today at midnight — used as minDate on the calendar to block past dates
+  const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
   function handleSubmit() {
-    if (!selectedDate || !startTime || !endTime) {
-      setError("Please select a date and provide both start and end times.");
-      return;
-    }
     if (startTime >= endTime) {
       setError("End time must be after start time.");
       return;
@@ -140,14 +139,12 @@ function RequestAppointment() {
           <p style={{ fontWeight: 600, fontSize: "15px", marginBottom: "12px" }}>
             Select a preferred date
           </p>
-          <CalendarComponent onDateChange={(date) => setSelectedDate(date)} />
-          {selectedDate && (
-            <p style={{ marginTop: "10px", fontSize: "14px", color: "#507da7" }}>
-              Selected: {selectedDate.toLocaleDateString("en-CA", {
-                weekday: "long", month: "long", day: "numeric", year: "numeric",
-              })}
-            </p>
-          )}
+          <CalendarComponent minDate={today} onDateChange={(date) => setSelectedDate(date)} />
+          <p style={{ marginTop: "10px", fontSize: "14px", color: "#507da7" }}>
+            Selected: {selectedDate.toLocaleDateString("en-CA", {
+              weekday: "long", month: "long", day: "numeric", year: "numeric",
+            })}
+          </p>
         </div>
 
         {/* Right — form details */}
@@ -162,6 +159,7 @@ function RequestAppointment() {
               <input
                 type="time"
                 value={startTime}
+                max={endTime || undefined}
                 onChange={(e) => setStartTime(e.target.value)}
                 style={{ ...inputStyle, flex: 1 }}
               />
@@ -169,6 +167,7 @@ function RequestAppointment() {
               <input
                 type="time"
                 value={endTime}
+                min={startTime || undefined}
                 onChange={(e) => setEndTime(e.target.value)}
                 style={{ ...inputStyle, flex: 1 }}
               />
