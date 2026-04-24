@@ -49,6 +49,10 @@ function Navbar() {
           </Button>
         )}
 
+        <Button variant="ghost" size="sm" onClick={() => navigate("/browse")}>
+          Browse Owners
+        </Button>
+
         <Button variant="primary" size="sm" onClick={() => navigate("/dashboard")}>
           My Bookings
         </Button>

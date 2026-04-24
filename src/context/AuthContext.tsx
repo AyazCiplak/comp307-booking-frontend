@@ -43,9 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     //email: "ayaz.ciplak@mail.mcgill.ca", // swap to @mcgill.ca to see owner view
     //role: getRoleFromEmail("ayaz.ciplak@mail.mcgill.ca"),
 
-    name: "Joseph Vibyhal",
-    email: "joseph.vibyhal@mcgill.ca", // idk what his actual email is
-    role: getRoleFromEmail("joseph.vibyhal@mcgill.ca")
+    name: "Joseph Vybihal",
+    email: "joseph.vybihal@mcgill.ca", // idk what his actual email is
+    role: getRoleFromEmail("joseph.vybihal@mcgill.ca")
   });
 
   function login(authUser: AuthUser) {
