@@ -1,83 +1,579 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CalendarComponent from "../../../components/ui/CalendarComponent.tsx";
+import Button from "../../../components/ui/Button.tsx";
+import Card from "../../../components/ui/Card.tsx";
+import { useAuth } from "../../../context/AuthContext.tsx";
 
+// Shared input style — matches Login / Register form inputs
 const INPUT_CLS =
   "py-[15px] px-4 border-[3px] border-dark-grey rounded-xl text-[1.05rem] " +
   "outline-none bg-transparent placeholder:text-dark-grey " +
   "focus:border-steel-blue transition-colors duration-200 box-border";
 
+type SlotKind = "office-hour" | "group";
+
+// Mon–Sun in display order; value = JS Date.getDay() (Sun=0)
+const WEEKDAYS = [
+  { label: "Mon", value: 1 },
+  { label: "Tue", value: 2 },
+  { label: "Wed", value: 3 },
+  { label: "Thu", value: 4 },
+  { label: "Fri", value: 5 },
+  { label: "Sat", value: 6 },
+  { label: "Sun", value: 0 },
+] as const;
+
+type SlotEntry = { id: string; date: Date; startTime: string; endTime: string };
+type DaySchedule = { start: string; end: string };
+
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+/** Returns the first occurrence of targetDay (0=Sun...6=Sat) at or after "from". */
+function getNextWeekday(from: Date, targetDay: number): Date {
+  const fromDay = from.getDay();
+  let diff = targetDay - fromDay;
+  if (diff < 0) diff += 7;
+  return addDays(from, diff);
+}
+
+function fmtDate(date: Date): string {
+  return date.toLocaleDateString("en-CA", {
+    weekday: "short", month: "short", day: "numeric", year: "numeric",
+  });
+}
+
+/**
+ * Create Slot page (/owner/create-slot).
+ * Owner-only page for creating new booking slots.
+ *
+ * Type 3 -> Office Hours: select days of the week + time, specify number of
+ *   recurring weeks. The page auto-generates all actual slot dates on submit.
+ *
+ * Type 2 ->  Group Meeting: add specific date+time pairs to a list, give the
+ *   sequence a name + user ceiling, get a shareable invite URL on creation.
+ */
 function CreateSlot() {
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [slotType, setSlotType] = useState("");
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  return (
-    <div>
-      {/* title */}
-      <h1 className="text-2xl font-bold mb-4">Create a New Booking Slot</h1>
+  // today at midnight — used as minDate for all date pickers
+  const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
 
-      <div className="mb-6 flex gap-3">
-        {/* calendar component */}
-        <div className="max-w-md mx-auto flex flex-col items-center gap-6 justify-start">
-          <CalendarComponent />
-        </div>
+  // Shared
+  const [slotKind, setSlotKind] = useState<SlotKind>("office-hour");
+  const [error, setError]       = useState("");
 
-        {/* slot details */}
-        <div className="max-w-lg mx-auto flex flex-col items-center gap-3 justify-start">
-          {/* time inputs  */}
-          <a className="text-dark-grey text-xl font-bold">Slot Time</a>
-          <div className="flex items-center gap-3 w-full">
-            <input
-              type="time"
-              value={startTime}
-              placeholder="Start Time"
-              className={INPUT_CLS + " w-half"}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
+  // Type 2 (group meeting)
+  const [pickDate, setPickDate]     = useState<Date>(new Date(today));
+  const [pickStart, setPickStart]   = useState("09:00");
+  const [pickEnd, setPickEnd]       = useState("10:00");
+  const [slotList, setSlotList]     = useState<SlotEntry[]>([]);
+  const [seqName, setSeqName]       = useState("");
+  const [userCeiling, setUserCeiling] = useState("5");
 
-            <p className="text-dark-grey font-bold">-</p>
-            <input
-              type="time"
-              value={endTime}
-              placeholder="End Time"
-              className={INPUT_CLS + " w-half"}
-              onChange={(e) => setEndTime(e.target.value)}
-            />
-          </div>
+  // Type 3 (office hours)
+  const [dayPattern, setDayPattern] = useState<Record<number, DaySchedule>>({});
+  const [officeTitle, setOfficeTitle] = useState("");
+  const [startDateStr, setStartDateStr] = useState(
+    () => today.toISOString().split("T")[0],  // YYYY-MM-DD default = today
+  );
+  const [numWeeks, setNumWeeks] = useState("4");
 
-          {/* slot type  */}
-          <a className="text-dark-grey text-xl - py-2 font-bold">Slot Type</a>
-          <div className="flex items-center gap-3 w-full">
-            <label className="flex flex-1 items-center gap-2 rounded-xl  px-2 cursor-pointer transition-colors duration-200">
-              <input
-                type="radio"
-                name="slotType"
-                value="Office Hours"
-                checked={slotType === "Office Hours"}
-                onChange={(e) => setSlotType(e.target.value)}
-                className="h-4 w-4 accent-steel-blue"
-              />
-              <span className="text-dark-grey font-medium hover:text-steel-blue">
-                Office Hours
-              </span>
-            </label>
+  // Success (type 2 only)
+  const [createdUrl, setCreatedUrl]   = useState<string | null>(null);
+  const [createdName, setCreatedName] = useState<string | null>(null);
+  const [copiedUrl, setCopiedUrl]     = useState(false);
 
-            <label className="flex flex-1 items-center gap-2 rounded-xl px-2  cursor-pointer transition-colors duration-200">
-              <input
-                type="radio"
-                name="slotType"
-                value="Appointment"
-                checked={slotType === "Appointment"}
-                onChange={(e) => setSlotType(e.target.value)}
-                className="h-4 w-4 background-color-white accent-steel-blue"
-              />
-              <span className="text-dark-grey font-medium hover:text-steel-blue">
-                Appointment
-              </span>
-            </label>
-          </div>
-        </div>
+  // Helpers - type 2
+  function addSlot() {
+    if (!pickStart || !pickEnd) {
+      setError("Set both start and end times before adding a slot.");
+      return;
+    }
+    if (pickStart >= pickEnd) {
+      setError("End time must be after start time.");
+      return;
+    }
+    setError("");
+    setSlotList((prev) => [
+      ...prev,
+      { id: `${Date.now()}-${Math.random()}`, date: new Date(pickDate), startTime: pickStart, endTime: pickEnd },
+    ]);
+  }
+
+  function removeSlot(id: string) {
+    setSlotList((prev) => prev.filter((s) => s.id !== id));
+  }
+
+  // Helpers - type 3
+  function toggleDay(val: number) {
+    setDayPattern((prev) => {
+      const next = { ...prev };
+      if (val in next) { delete next[val]; }
+      else             { next[val] = { start: "09:00", end: "10:00" }; }
+      return next;
+    });
+  }
+
+  function setDayTime(val: number, field: "start" | "end", time: string) {
+    setDayPattern((prev) => ({
+      ...prev,
+      [val]: {
+        start: field === "start" ? time : prev[val].start,
+        end:   field === "end"   ? time : prev[val].end,
+      },
+    }));
+  }
+
+  const selectedDayCount = Object.keys(dayPattern).length;
+  const weeksNum          = parseInt(numWeeks) || 0;
+  const totalSlots3       = selectedDayCount * weeksNum;
+
+  // Submission handling 
+  function handleCreate() {
+    setError("");
+
+    if (slotKind === "group") {
+      if (slotList.length === 0) { setError("Add at least one time slot to the list."); return; }
+      if (!seqName.trim())       { setError("Please name your meeting sequence."); return; }
+      if (Number(userCeiling) < 1 || isNaN(Number(userCeiling))) {
+        setError("Max users must be a positive number.");
+        return;
+      }
+      const slugId = `${seqName.trim().toLowerCase().replace(/\s+/g, "-")}-${Date.now().toString(36)}`;
+      const url    = `${window.location.origin}/invite/${slugId}`;
+      setCreatedUrl(url);
+      setCreatedName(seqName.trim());
+      // TODO: POST /api/sequences
+      console.log("Group meeting created:", {
+        owner: user?.email,
+        name: seqName.trim(),
+        slots: slotList.map((s) => ({ date: fmtDate(s.date), startTime: s.startTime, endTime: s.endTime })),
+        userCeiling: Number(userCeiling),
+        inviteUrl: url,
+      });
+      return;
+    }
+
+    // Type 3 validation
+    if (selectedDayCount === 0) { setError("Select at least one day of the week."); return; }
+    for (const key of Object.keys(dayPattern)) {
+      const { start, end } = dayPattern[Number(key)];
+      if (!start || !end)  { setError("Set start and end times for all selected days."); return; }
+      if (start >= end)    { setError("End time must be after start time for every day."); return; }
+    }
+    if (!startDateStr)   { setError("Select a starting date."); return; }
+    if (weeksNum < 1)    { setError("Number of weeks must be at least 1."); return; }
+
+    // Generate all recurring slot dates
+    const origin = new Date(startDateStr + "T00:00:00");
+    const generated: Array<{ date: string; startTime: string; endTime: string }> = [];
+    for (let week = 0; week < weeksNum; week++) {
+      const weekAnchor = addDays(origin, week * 7);
+      for (const key of Object.keys(dayPattern)) {
+        const dayVal  = Number(key);
+        const slotDate = getNextWeekday(weekAnchor, dayVal);
+        if (slotDate >= origin) {
+          generated.push({
+            date:      slotDate.toLocaleDateString(),
+            startTime: dayPattern[dayVal].start,
+            endTime:   dayPattern[dayVal].end,
+          });
+        }
+      }
+    }
+    // TODO: POST /api/slots (batch)
+    console.log("Office hours created:", {
+      owner: user?.email,
+      title: officeTitle.trim() || "Office Hours",
+      slots: generated,
+    });
+    navigate("/dashboard");
+  }
+
+  function handleCopyUrl() {
+    if (!createdUrl) return;
+    navigator.clipboard.writeText(createdUrl).then(() => {
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
+    });
+  }
+
+  // ### SUCCESS SCREEN (upon URL creation) - Type 2 only ### 
+  if (createdUrl && createdName) {
+    return (
+      <div style={{ maxWidth: "640px", margin: "0 auto", padding: "40px 20px" }}>
+        <Card>
+          <Card.Content>
+            <div style={{ textAlign: "center", padding: "32px 0 24px" }}>
+              <p style={{ fontSize: "40px", marginBottom: "12px" }}>🎉</p>
+              <h2 style={{ fontSize: "22px", margin: "0 0 8px" }}>Sequence Created!</h2>
+              <p style={{ color: "#8e8e8e", fontSize: "15px", marginBottom: "28px" }}>
+                <strong>{createdName}</strong> is ready. Share the invite link with participants.
+              </p>
+              <div style={{
+                display: "flex", alignItems: "center", gap: "10px",
+                background: "#f7f7f7", borderRadius: "10px",
+                padding: "10px 14px", marginBottom: "28px", textAlign: "left",
+              }}>
+                <span style={{ flex: 1, fontSize: "13px", color: "#507da7", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {createdUrl}
+                </span>
+                <Button variant={copiedUrl ? "ghost" : "secondary"} size="sm" onClick={handleCopyUrl}>
+                  {copiedUrl ? "✓ Copied!" : "Copy Link"}
+                </Button>
+              </div>
+              <Button variant="primary" onClick={() => navigate("/dashboard")}>
+                Back to Dashboard
+              </Button>
+            </div>
+          </Card.Content>
+        </Card>
       </div>
+    );
+  }
+
+  // ### MAIN FORM ### 
+  return (
+    <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "40px 20px" }}>
+
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+        <div>
+          <h1 style={{ fontSize: "28px", margin: "0 0 4px" }}>Create a New Slot</h1>
+          <p style={{ color: "#8e8e8e", fontSize: "15px", margin: 0 }}>
+            Choose a type, schedule your times, then create.
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+          ← Back to Dashboard
+        </Button>
+      </div>
+
+      {/* Type picker */}
+      <Card className="mb-6">
+        <Card.Content>
+          <p style={{ fontWeight: 600, fontSize: "15px", marginBottom: "14px" }}>Slot Type</p>
+          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+
+            <label style={{
+              flex: 1, minWidth: "220px",
+              display: "flex", alignItems: "flex-start", gap: "12px",
+              border: `2px solid ${slotKind === "office-hour" ? "#507da7" : "#e0e0e0"}`,
+              borderRadius: "12px", padding: "14px 16px", cursor: "pointer",
+              background: slotKind === "office-hour" ? "#f0f5fb" : "transparent",
+              transition: "all 0.15s",
+            }}>
+              <input type="radio" name="slotKind" value="office-hour"
+                checked={slotKind === "office-hour"}
+                onChange={() => setSlotKind("office-hour")}
+                className="accent-steel-blue mt-0.5" />
+              <div>
+                <p style={{ fontWeight: 600, margin: "0 0 2px", fontSize: "15px" }}>Office Hours (Recurring)</p>
+                <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
+                  Choose days of the week and a number of recurring weeks. Bookable by any user.
+                </p>
+              </div>
+            </label>
+
+            <label style={{
+              flex: 1, minWidth: "220px",
+              display: "flex", alignItems: "flex-start", gap: "12px",
+              border: `2px solid ${slotKind === "group" ? "#629dfc" : "#e0e0e0"}`,
+              borderRadius: "12px", padding: "14px 16px", cursor: "pointer",
+              background: slotKind === "group" ? "#f0f5ff" : "transparent",
+              transition: "all 0.15s",
+            }}>
+              <input type="radio" name="slotKind" value="group"
+                checked={slotKind === "group"}
+                onChange={() => setSlotKind("group")}
+                className="accent-light-blue mt-0.5" />
+              <div>
+                <p style={{ fontWeight: 600, margin: "0 0 2px", fontSize: "15px" }}>Group Meeting</p>
+                <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
+                  Add specific date/time slots, set a user ceiling per slot, get a shareable invite link.
+                </p>
+              </div>
+            </label>
+
+          </div>
+        </Card.Content>
+      </Card>
+
+      {/* Error banner */}
+      {error && (
+        <div style={{ background: "#fbeaea", color: "#3a1f1f", borderRadius: "10px", padding: "14px 18px", fontSize: "0.95rem", marginBottom: "20px" }}>
+          {error}
+        </div>
+      )}
+
+      {/* ### TYPE 2 - GROUP MEETING ### */}
+      {slotKind === "group" && (
+        <>
+          {/* Slot builder */}
+          <Card className="mb-5">
+            <Card.Header>
+              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Add Time Slots</p>
+            </Card.Header>
+            <Card.Content>
+              <div style={{ display: "flex", gap: "32px", flexWrap: "wrap", alignItems: "flex-start" }}>
+
+                {/* Calendar */}
+                <div style={{ flexShrink: 0 }}>
+                  <p className="text-dark-grey font-semibold text-[0.9rem] mb-2">Pick a Date</p>
+                  <CalendarComponent
+                    minDate={today}
+                    onDateChange={(d) => setPickDate(d)}
+                  />
+                  <p style={{ marginTop: "8px", fontSize: "13px", color: "#507da7" }}>
+                    {fmtDate(pickDate)}
+                  </p>
+                </div>
+
+                {/* Time range + Add button */}
+                <div style={{ flex: 1, minWidth: "240px", display: "flex", flexDirection: "column", gap: "16px", paddingTop: "4px" }}>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-dark-grey font-semibold text-[0.9rem]">Time Range</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="time"
+                        value={pickStart}
+                        max={pickEnd || undefined}
+                        className={INPUT_CLS + " flex-1"}
+                        onChange={(e) => setPickStart(e.target.value)}
+                      />
+                      <span className="text-dark-grey font-bold">–</span>
+                      <input
+                        type="time"
+                        value={pickEnd}
+                        min={pickStart || undefined}
+                        className={INPUT_CLS + " flex-1"}
+                        onChange={(e) => setPickEnd(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <Button variant="secondary" onClick={addSlot}>
+                    + Add to Slot List
+                  </Button>
+                </div>
+
+              </div>
+            </Card.Content>
+          </Card>
+
+          {/* Slot list */}
+          <Card className="mb-5">
+            <Card.Header>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Scheduled Slots</p>
+                <span style={{ fontSize: "13px", color: "#8e8e8e" }}>
+                  {slotList.length} slot{slotList.length !== 1 ? "s" : ""} added
+                </span>
+              </div>
+            </Card.Header>
+            <Card.Content>
+              {slotList.length === 0 ? (
+                <p style={{ color: "#8e8e8e", textAlign: "center", padding: "20px 0", fontSize: "14px" }}>
+                  No slots added yet. Pick a date and time above, then click "Add to Slot List".
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {slotList.map((s) => (
+                    <div key={s.id} style={{
+                      display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "10px 14px", background: "#f7f7f7", borderRadius: "10px",
+                    }}>
+                      <span style={{ fontSize: "14px" }}>
+                        <strong>{fmtDate(s.date)}</strong>&nbsp;·&nbsp;{s.startTime} – {s.endTime}
+                      </span>
+                      <button
+                        onClick={() => removeSlot(s.id)}
+                        title="Remove"
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#bd271d", fontSize: "20px", lineHeight: 1, padding: "0 4px", fontFamily: "inherit" }}
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card.Content>
+          </Card>
+
+          {/* Meeting details */}
+          <Card className="mb-6">
+            <Card.Header>
+              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Meeting Details</p>
+            </Card.Header>
+            <Card.Content>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <div className="flex flex-col gap-2">
+                  <label className="text-dark-grey font-semibold text-[0.95rem]">Sequence Name</label>
+                  <input type="text" value={seqName}
+                    placeholder="e.g. Midterm Review Sessions"
+                    className={INPUT_CLS + " w-full"}
+                    onChange={(e) => setSeqName(e.target.value)} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-dark-grey font-semibold text-[0.95rem]">Max Users per Slot</label>
+                  <input type="number" min={1} max={100} value={userCeiling}
+                    className={INPUT_CLS + " w-full"}
+                    onChange={(e) => setUserCeiling(e.target.value)} />
+                  <p className="text-[#8e8e8e] text-sm">Applies to every slot in this sequence.</p>
+                </div>
+              </div>
+            </Card.Content>
+          </Card>
+        </>
+      )}
+
+      {/* ### TYPE 3 - OFFICE HOURS (recurring) ### */}
+      {slotKind === "office-hour" && (
+        <>
+          {/* Weekly pattern */}
+          <Card className="mb-5">
+            <Card.Header>
+              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Weekly Schedule</p>
+            </Card.Header>
+            <Card.Content>
+
+              {/* Day toggle buttons */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "20px" }}>
+                {WEEKDAYS.map(({ label, value }) => {
+                  const active = value in dayPattern;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => toggleDay(value)}
+                      style={{
+                        padding: "8px 18px", borderRadius: "8px", fontSize: "14px",
+                        fontWeight: 600, cursor: "pointer",
+                        border: `2px solid ${active ? "#507da7" : "#e0e0e0"}`,
+                        background: active ? "#507da7" : "transparent",
+                        color: active ? "#fff" : "#555",
+                        transition: "all 0.15s",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Per-day time inputs */}
+              {selectedDayCount > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {WEEKDAYS.filter(({ value }) => value in dayPattern).map(({ label, value }) => (
+                    <div key={value} style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                      <span style={{ width: "36px", fontWeight: 700, fontSize: "14px", color: "#507da7", flexShrink: 0 }}>
+                        {label}
+                      </span>
+                      <input
+                        type="time"
+                        value={dayPattern[value].start}
+                        max={dayPattern[value].end || undefined}
+                        className={INPUT_CLS}
+                        style={{ flex: 1, minWidth: "120px" }}
+                        onChange={(e) => setDayTime(value, "start", e.target.value)}
+                      />
+                      <span className="text-dark-grey font-bold">–</span>
+                      <input
+                        type="time"
+                        value={dayPattern[value].end}
+                        min={dayPattern[value].start || undefined}
+                        className={INPUT_CLS}
+                        style={{ flex: 1, minWidth: "120px" }}
+                        onChange={(e) => setDayTime(value, "end", e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: "#8e8e8e", fontSize: "14px" }}>
+                  Toggle one or more days above, then set their time ranges.
+                </p>
+              )}
+
+            </Card.Content>
+          </Card>
+
+          {/* Recurrence settings */}
+          <Card className="mb-5">
+            <Card.Header>
+              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Recurrence</p>
+            </Card.Header>
+            <Card.Content>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-dark-grey font-semibold text-[0.95rem]">Starting From</label>
+                  <input
+                    type="date"
+                    value={startDateStr}
+                    min={today.toISOString().split("T")[0]}
+                    className={INPUT_CLS + " w-full"}
+                    onChange={(e) => setStartDateStr(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-dark-grey font-semibold text-[0.95rem]">Number of Weeks</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={52}
+                    value={numWeeks}
+                    className={INPUT_CLS + " w-full"}
+                    onChange={(e) => setNumWeeks(e.target.value)}
+                  />
+                </div>
+
+                {/* Slot preview */}
+                {selectedDayCount > 0 && weeksNum > 0 && (
+                  <div style={{ background: "#f0f5fb", borderRadius: "10px", padding: "12px 16px", fontSize: "14px", color: "#507da7" }}>
+                    📅 Will create&nbsp;<strong>{totalSlots3} slot{totalSlots3 !== 1 ? "s" : ""}</strong>&nbsp;total
+                    &nbsp;({selectedDayCount} day{selectedDayCount !== 1 ? "s" : ""} × {numWeeks} week{weeksNum !== 1 ? "s" : ""})
+                  </div>
+                )}
+              </div>
+            </Card.Content>
+          </Card>
+
+          {/* Optional slot title */}
+          <Card className="mb-6">
+            <Card.Content>
+              <div className="flex flex-col gap-2">
+                <label className="text-dark-grey font-semibold text-[0.95rem]">
+                  Slot Title&nbsp;<span className="font-normal text-[#8e8e8e]">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={officeTitle}
+                  placeholder="e.g. COMP 307 Office Hours"
+                  className={INPUT_CLS + " w-full"}
+                  onChange={(e) => setOfficeTitle(e.target.value)}
+                />
+              </div>
+            </Card.Content>
+          </Card>
+        </>
+      )}
+
+      {/* Create / Cancel buttons */}
+      <div style={{ display: "flex", gap: "12px" }}>
+        <Button variant="primary" onClick={handleCreate}>
+          {slotKind === "group" ? "Create Sequence & Get Link" : "Create Office Hours"}
+        </Button>
+        <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+          Cancel
+        </Button>
+      </div>
+
     </div>
   );
 }
