@@ -18,43 +18,38 @@ export type SlotType = "office-hour" | "meeting" | "group";
 
 export type SlotStatus = "available" | "booked" | "cancelled" | "pending";
 
-
-// ##### INTERFACES #####
-// # BookingSlot Interface #
-
 /**
  * A single bookable time slot, holding all associated necessary info.
  * Used across the dashboard, browse pages, and group booking page.
+ *
+ * Identity note: ownerEmail (@mcgill.ca) is the single owner identifier.
+ * The URL-safe form is ownerEmail.split('@')[0] (e.g. "joseph.vybihal"),
+ * used as the :ownerUsername route param on /browse/:ownerUsername.
  */
 export interface BookingSlot {
   id: string;
   date: Date;
   startTime: string; // e.g. "10:00 AM"
   endTime: string; // e.g. "11:00 AM"
-  ownerId: string;
   ownerName: string;
-  ownerEmail: string;
-  status: SlotStatus; // "available", "booked", "cancelled", "pending"
-  type: SlotType; // "office-hour", "meeting", "group"
+  ownerEmail: string; // @mcgill.ca — serves as the owner's unique identifier
+  status: SlotStatus;
+  type: SlotType;
   title?: string;
 
-  // Booking info - present when status is "booked"
-  bookedByUserId?: string;
+  // Booking info — present when status === "booked"
   bookedByUserName?: string;
-  bookedByUserEmail?: string;
-
+  bookedByUserEmail?: string;  // @mail.mcgill.ca — serves as the booker's UNIQUE ID 
   // Type 3 (office-hour) specific
   registeredCount?: number; // number of users who have booked this slot
 
   // Type 2 (group) specific
-  sequenceId?: string; // links back to a MeetingSequence
+  sequenceId?: string; // links back to a MeetingSequence by id
   maxUsers?: number; // user ceiling for this slot (inherits from sequence)
-  registeredUserIds?: string[]; // list of user ids who signed up
+  registeredUserIds?: string[]; // list of user emails who signed up
 }
 
-// # CalendarDay Interface #
-
-/** A single day cell on a calendar view, containing a list of available slots */
+/** A single day cell on a calendar view. */
 export interface CalendarDay {
   date: Date;
   dayNumber: number;
@@ -62,9 +57,6 @@ export interface CalendarDay {
   isToday: boolean;
   slots: BookingSlot[];
 }
-
-// # MeetingSequence Interface # 
-// Used for type 2 ("group") meetings 
 
 /**
  * A named group-meeting sequence created by an owner (Type 2).
@@ -74,18 +66,13 @@ export interface CalendarDay {
 export interface MeetingSequence {
   id: string;
   name: string; // e.g. "Midterm Review Sessions"
-  ownerId: string;
   ownerName: string;
-  ownerEmail: string;
-  slots: BookingSlot[]; // all BookingSlots belonging to this sequence
-  userCeiling: number; // max users allowed per slot (same for all slots in sequence)
-  inviteUrl: string; // generated URL — e.g. /invite/abc123
+  ownerEmail: string; // @mcgill.ca — owner identifier
+  slots: BookingSlot[];
+  userCeiling: number; // max users allowed per slot
+  inviteUrl: string; // generated URL, e.g. /invite/seq-1
   createdAt: Date;
 }
-
-
-// # PendingRequest Interface #
-// Used for type 1 ("requested meeting") meetings
 
 /**
  * A meeting request sent by a user to an owner (type 1).
@@ -94,31 +81,25 @@ export interface MeetingSequence {
  */
 export interface PendingRequest {
   id: string;
-  requesterId: string;
   requesterName: string;
-  requesterEmail: string;
-  ownerId: string; // Will likely be the same as ownerEmail 
+  requesterEmail: string; // @mail.mcgill.ca or @mcgill.ca — requester identifier
   ownerName: string;
-  ownerEmail: string;
+  ownerEmail: string; // @mcgill.ca — owner identifier
   requestedDate: Date;
   requestedStartTime: string; // e.g. "2:00 PM"
   requestedEndTime: string; // e.g. "2:30 PM"
-  message?: string; // optional note from the requesting user
+  message?: string; // optional note from the requester
   status: "pending" | "accepted" | "declined";
   createdAt: Date;
 }
-
-// # Owner interface #
-// Used for Browse Owners page 
 
 /**
  * A summary card for an owner, displayed on the Browse Owners page.
  * Full slot details are loaded separately on the Owner Appointments page.
  */
 export interface Owner {
-  id: string;
   name: string;
-  email: string; // will always be "@mcgill.ca"
+  email: string; // always @mcgill.ca — the unique identifier (ALSO ACTS AS ID)
   department?: string; // e.g. "School of Computer Science"
   title?: string; // e.g. "Professor", "Teaching Assistant"
   activeSlotCount: number; // number of currently available slots

@@ -17,7 +17,6 @@ import type { BookingSlot, MeetingSequence, Owner, PendingRequest } from "../typ
  */
 export const mockOwners: Owner[] = [
   {
-    id: "owner-1",
     name: "Prof. Joseph Vybihal",
     email: "joseph.vybihal@mcgill.ca",
     department: "School of Computer Science",
@@ -25,7 +24,6 @@ export const mockOwners: Owner[] = [
     activeSlotCount: 4,
   },
   {
-    id: "owner-2",
     name: "Sarah Thompson",
     email: "sarah.thompson@mcgill.ca",
     department: "School of Computer Science",
@@ -33,7 +31,6 @@ export const mockOwners: Owner[] = [
     activeSlotCount: 3,
   },
   {
-    id: "owner-3",
     name: "Prof. Derek Ruths",
     email: "derek.ruths@mcgill.ca",
     department: "School of Computer Science",
@@ -41,7 +38,6 @@ export const mockOwners: Owner[] = [
     activeSlotCount: 2,
   },
   {
-    id: "owner-4",
     name: "Prof. Brigitte Pientka",
     email: "brigitte.pientka@mcgill.ca",
     department: "School of Computer Science",
@@ -49,7 +45,6 @@ export const mockOwners: Owner[] = [
     activeSlotCount: 5,
   },
   {
-    id: "owner-5",
     name: "Lucas Pereira",
     email: "lucas.pereira@mcgill.ca",
     department: "School of Computer Science",
@@ -60,17 +55,13 @@ export const mockOwners: Owner[] = [
 
 // ### Slots visible on the Owner Appointments page for Prof. Vybihal ### 
 
-/**
- * Active Type 3 (office-hour) slots for Prof. Vybihal.
- * Shown on /browse/owner-1 — users can book individual slots.
- */
+/** Active Type 3 (office-hour) slots for Prof. Vybihal. Shown on /browse/joseph.vybihal */
 export const professorVybihalSlots: BookingSlot[] = [
   {
     id: "v-1",
     date: new Date("2026-04-28"),
     startTime: "10:00 AM",
     endTime: "11:00 AM",
-    ownerId: "owner-1",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "available",
@@ -83,7 +74,6 @@ export const professorVybihalSlots: BookingSlot[] = [
     date: new Date("2026-04-30"),
     startTime: "1:00 PM",
     endTime: "2:00 PM",
-    ownerId: "owner-1",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "available",
@@ -96,7 +86,6 @@ export const professorVybihalSlots: BookingSlot[] = [
     date: new Date("2026-05-05"),
     startTime: "10:00 AM",
     endTime: "10:30 AM",
-    ownerId: "owner-1",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "available",
@@ -109,30 +98,24 @@ export const professorVybihalSlots: BookingSlot[] = [
     date: new Date("2026-05-07"),
     startTime: "3:00 PM",
     endTime: "4:00 PM",
-    ownerId: "owner-1",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "booked",
     type: "office-hour",
     title: "COMP 307 Office Hours",
     registeredCount: 3,
-    bookedByUserId: "ayaz.ciplak@mail.mcgill.ca",
     bookedByUserName: "Ayaz Ciplak",
     bookedByUserEmail: "ayaz.ciplak@mail.mcgill.ca",
   },
 ];
 
-/**
- * Active Type 3 slots for TA Sarah Thompson.
- * Shown on /browse/owner-2.
- */
+/** Active Type 3 slots for TA Sarah Thompson. Shown on /browse/sarah.thompson */
 export const taSarahSlots: BookingSlot[] = [
   {
     id: "s-1",
     date: new Date("2026-04-29"),
     startTime: "2:00 PM",
     endTime: "2:30 PM",
-    ownerId: "owner-2",
     ownerName: "Sarah Thompson",
     ownerEmail: "sarah.thompson@mcgill.ca",
     status: "available",
@@ -145,7 +128,6 @@ export const taSarahSlots: BookingSlot[] = [
     date: new Date("2026-05-01"),
     startTime: "11:00 AM",
     endTime: "11:30 AM",
-    ownerId: "owner-2",
     ownerName: "Sarah Thompson",
     ownerEmail: "sarah.thompson@mcgill.ca",
     status: "available",
@@ -158,7 +140,6 @@ export const taSarahSlots: BookingSlot[] = [
     date: new Date("2026-05-06"),
     startTime: "4:00 PM",
     endTime: "4:30 PM",
-    ownerId: "owner-2",
     ownerName: "Sarah Thompson",
     ownerEmail: "sarah.thompson@mcgill.ca",
     status: "available",
@@ -168,11 +149,11 @@ export const taSarahSlots: BookingSlot[] = [
   },
 ];
 
-/** Convenience map — keyed by owner id, used on the Owner Appointments page. */
+/** Convenience map — keyed by owner email, used on the Owner Appointments page. */
 export const slotsByOwner: Record<string, BookingSlot[]> = {
-  "owner-1": professorVybihalSlots,
-  "owner-2": taSarahSlots,
-  // can add more owners here as needed
+  "joseph.vybihal@mcgill.ca": professorVybihalSlots,
+  "sarah.thompson@mcgill.ca": taSarahSlots,
+  // add more owners here as needed
 };
 
 // ### My Appointments (logged-in user's booked slots) ### 
@@ -187,13 +168,11 @@ export const myAppointments: BookingSlot[] = [
     date: new Date("2026-04-28"),
     startTime: "10:00 AM",
     endTime: "11:00 AM",
-    ownerId: "owner-1",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "booked",
     type: "office-hour",
     title: "COMP 307 Office Hours",
-    bookedByUserId: "ayaz.ciplak@mail.mcgill.ca",
     bookedByUserName: "Ayaz Ciplak",
     bookedByUserEmail: "ayaz.ciplak@mail.mcgill.ca",
   },
@@ -202,13 +181,11 @@ export const myAppointments: BookingSlot[] = [
     date: new Date("2026-05-02"),
     startTime: "2:00 PM",
     endTime: "2:30 PM",
-    ownerId: "owner-2",
     ownerName: "Sarah Thompson",
     ownerEmail: "sarah.thompson@mcgill.ca",
     status: "pending",
     type: "meeting",
     title: "Assignment Review Request",
-    bookedByUserId: "ayaz.ciplak@mail.mcgill.ca",
     bookedByUserName: "Ayaz Ciplak",
     bookedByUserEmail: "ayaz.ciplak@mail.mcgill.ca",
   },
@@ -217,14 +194,12 @@ export const myAppointments: BookingSlot[] = [
     date: new Date("2026-05-10"),
     startTime: "3:00 PM",
     endTime: "3:30 PM",
-    ownerId: "owner-1",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "booked",
     type: "group",
     title: "Midterm Review Session",
     sequenceId: "seq-1",
-    bookedByUserId: "ayaz.ciplak@mail.mcgill.ca",
     bookedByUserName: "Ayaz Ciplak",
     bookedByUserEmail: "ayaz.ciplak@mail.mcgill.ca",
   },
@@ -242,14 +217,12 @@ export const ownerSlots: BookingSlot[] = [
     date: new Date("2026-04-29"),
     startTime: "10:00 AM",
     endTime: "11:00 AM",
-    ownerId: "owner-me",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "booked",
     type: "office-hour",
     title: "COMP 307 Office Hours",
     registeredCount: 3,
-    bookedByUserId: "jane.smith@mail.mcgill.ca",
     bookedByUserName: "Jane Smith",
     bookedByUserEmail: "jane.smith@mail.mcgill.ca",
   },
@@ -258,7 +231,6 @@ export const ownerSlots: BookingSlot[] = [
     date: new Date("2026-05-06"),
     startTime: "9:00 AM",
     endTime: "9:30 AM",
-    ownerId: "owner-me",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "available",
@@ -271,7 +243,6 @@ export const ownerSlots: BookingSlot[] = [
     date: new Date("2026-05-08"),
     startTime: "2:00 PM",
     endTime: "3:00 PM",
-    ownerId: "owner-me",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     status: "available",
@@ -286,13 +257,12 @@ export const ownerSlots: BookingSlot[] = [
 /**
  * Named group-meeting sequences created by the logged-in owner.
  * Each sequence has an invite URL that any logged-in user can use to sign up.
- * Shown in "My Created Meeting Sequences" on the owner Dashboard.
+ * Shown in "My Meeting Sequences" on the owner Dashboard.
  */
 export const ownerMeetingSequences: MeetingSequence[] = [
   {
     id: "seq-1",
     name: "Midterm Review Sessions",
-    ownerId: "owner-me",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     userCeiling: 5,
@@ -304,7 +274,6 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         date: new Date("2026-05-10"),
         startTime: "3:00 PM",
         endTime: "3:30 PM",
-        ownerId: "owner-me",
         ownerName: "Prof. Vybihal",
         ownerEmail: "joseph.vybihal@mcgill.ca",
         status: "booked",
@@ -323,7 +292,6 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         date: new Date("2026-05-12"),
         startTime: "3:00 PM",
         endTime: "3:30 PM",
-        ownerId: "owner-me",
         ownerName: "Prof. Vybihal",
         ownerEmail: "joseph.vybihal@mcgill.ca",
         status: "available",
@@ -338,7 +306,6 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         date: new Date("2026-05-14"),
         startTime: "3:00 PM",
         endTime: "3:30 PM",
-        ownerId: "owner-me",
         ownerName: "Prof. Vybihal",
         ownerEmail: "joseph.vybihal@mcgill.ca",
         status: "available",
@@ -353,7 +320,6 @@ export const ownerMeetingSequences: MeetingSequence[] = [
   {
     id: "seq-2",
     name: "Project Consultation Q&A",
-    ownerId: "owner-me",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     userCeiling: 3,
@@ -365,7 +331,6 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         date: new Date("2026-05-16"),
         startTime: "10:00 AM",
         endTime: "10:30 AM",
-        ownerId: "owner-me",
         ownerName: "Prof. Vybihal",
         ownerEmail: "joseph.vybihal@mcgill.ca",
         status: "available",
@@ -380,7 +345,6 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         date: new Date("2026-05-19"),
         startTime: "10:00 AM",
         endTime: "10:30 AM",
-        ownerId: "owner-me",
         ownerName: "Prof. Vybihal",
         ownerEmail: "joseph.vybihal@mcgill.ca",
         status: "available",
@@ -404,10 +368,8 @@ export const ownerMeetingSequences: MeetingSequence[] = [
 export const pendingRequests: PendingRequest[] = [
   {
     id: "req-1",
-    requesterId: "alice.wong@mail.mcgill.ca",
     requesterName: "Alice Wong",
     requesterEmail: "alice.wong@mail.mcgill.ca",
-    ownerId: "owner-me",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     requestedDate: new Date("2026-05-03"),
@@ -419,10 +381,8 @@ export const pendingRequests: PendingRequest[] = [
   },
   {
     id: "req-2",
-    requesterId: "bob.jones@mail.mcgill.ca",
     requesterName: "Bob Jones",
     requesterEmail: "bob.jones@mail.mcgill.ca",
-    ownerId: "owner-me",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     requestedDate: new Date("2026-05-04"),
@@ -434,10 +394,8 @@ export const pendingRequests: PendingRequest[] = [
   },
   {
     id: "req-3",
-    requesterId: "carla.diaz@mail.mcgill.ca",
     requesterName: "Carla Diaz",
     requesterEmail: "carla.diaz@mail.mcgill.ca",
-    ownerId: "owner-me",
     ownerName: "Prof. Vybihal",
     ownerEmail: "joseph.vybihal@mcgill.ca",
     requestedDate: new Date("2026-05-06"),
@@ -453,7 +411,6 @@ export const pendingRequests: PendingRequest[] = [
 /**
  * Meeting sequences that a user lands on via an invite URL (/invite/:sequenceId).
  * In production this would be fetched from the backend by sequence ID.
- * Here we reuse ownerMeetingSequences as a lookup map.
  */
 export const meetingSequenceById: Record<string, MeetingSequence> = Object.fromEntries(
   ownerMeetingSequences.map((seq) => [seq.id, seq])
