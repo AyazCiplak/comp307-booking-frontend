@@ -29,7 +29,9 @@ function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardPr
   const { user } = useAuth();
   const status = STATUS_STYLES[slot.status];
 
-  const isOwner    = user?.role === "owner";
+  // True only if the logged-in user is the owner of THIS slot.
+  // This ensures owners see "Book" on other owners' slots, not management controls.
+  const isOwner = user?.email === slot.ownerEmail;
   const isBookedByMe = slot.bookedByUserEmail === user?.email;
 
   // Format date: e.g. "Mon, Jan 20"
