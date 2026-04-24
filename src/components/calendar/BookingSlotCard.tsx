@@ -30,7 +30,7 @@ function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardPr
   const status = STATUS_STYLES[slot.status];
 
   const isOwner    = user?.role === "owner";
-  const isBookedByMe = slot.bookedByUserId === user?.email; // use id once backend sends it
+  const isBookedByMe = slot.bookedByUserEmail === user?.email;
 
   // Format date: e.g. "Mon, Jan 20"
   const dateLabel = new Date(slot.date).toLocaleDateString("en-CA", {
