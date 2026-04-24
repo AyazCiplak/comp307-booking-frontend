@@ -47,6 +47,22 @@ function fmtDate(date: Date): string {
   });
 }
 
+function sameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth()    === b.getMonth()    &&
+    a.getDate()     === b.getDate()
+  );
+}
+
+/**
+ * Returns true if [s1,e1) and [s2,e2) overlap.
+ * Times are "HH:MM" strings which compare lexicographically correctly.
+ */
+function timesOverlap(s1: string, e1: string, s2: string, e2: string): boolean {
+  return s1 < e2 && s2 < e1;
+}
+
 /**
  * Create Slot page (/owner/create-slot).
  * Owner-only page for creating new booking slots.
@@ -88,6 +104,8 @@ function CreateSlot() {
   const [createdUrl, setCreatedUrl]   = useState<string | null>(null);
   const [createdName, setCreatedName] = useState<string | null>(null);
   const [copiedUrl, setCopiedUrl]     = useState(false);
+  // Prevents double-submit on the "Create Sequence & Get Link" button.
+  const [submitting, setSubmitting]   = useState(false);
 
   // Helpers - type 2
   function addSlot() {
@@ -97,6 +115,16 @@ function CreateSlot() {
     }
     if (pickStart >= pickEnd) {
       setError("End time must be after start time.");
+      return;
+    }
+    // Reject duplicates and overlapping slots on the same day.
+    const conflict = slotList.find(
+      (s) => sameDay(s.date, pickDate) && timesOverlap(s.startTime, s.endTime, pickStart, pickEnd),
+    );
+    if (conflict) {
+      setError(
+        `This slot overlaps with an existing one on that day (${conflict.startTime}–${conflict.endTime}). Please choose a non-overlapping time.`,
+      );
       return;
     }
     setError("");
@@ -145,6 +173,7 @@ function CreateSlot() {
         setError("Max users must be a positive number.");
         return;
       }
+      setSubmitting(true);
       const slugId = `${seqName.trim().toLowerCase().replace(/\s+/g, "-")}-${Date.now().toString(36)}`;
       const url    = `${window.location.origin}/invite/${slugId}`;
       setCreatedUrl(url);
@@ -566,7 +595,7 @@ function CreateSlot() {
 
       {/* Create / Cancel buttons */}
       <div style={{ display: "flex", gap: "12px" }}>
-        <Button variant="primary" onClick={handleCreate}>
+        <Button variant="primary" onClick={handleCreate} disabled={submitting}>
           {slotKind === "group" ? "Create Sequence & Get Link" : "Create Office Hours"}
         </Button>
         <Button variant="ghost" onClick={() => navigate("/dashboard")}>
