@@ -16,7 +16,12 @@ function isSameDay(a: Date, b: Date) {
   );
 }
 
-function CalendarComponent() {
+interface CalendarComponentProps {
+  // Optional callback fired whenever the user selects a new date.
+  onDateChange?: (date: Date) => void;
+}
+
+function CalendarComponent({ onDateChange }: CalendarComponentProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(
     new Date(REFERENCE_YEAR, REFERENCE_MONTH_INDEX, REFERENCE_SELECTED_DAY),
   );
@@ -72,7 +77,10 @@ function CalendarComponent() {
           new Date(REFERENCE_YEAR, REFERENCE_MONTH_INDEX, 1)
         }
         onChange={(value) => {
-          if (value instanceof Date) setSelectedDate(value);
+          if (value instanceof Date) {
+            setSelectedDate(value);
+            onDateChange?.(value);
+          }
         }}
         showNeighboringMonth={false}
         prev2Label={null}

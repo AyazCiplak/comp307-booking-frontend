@@ -6,6 +6,7 @@ interface ButtonProps {
   onClick?: () => void;
   disabled?: boolean;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const Button = ({
@@ -16,6 +17,7 @@ const Button = ({
   onClick,
   disabled = false,
   className = "",
+  style,
 }: ButtonProps) => {
   const baseStyles =
     "font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center border-0 cursor-pointer";
@@ -44,6 +46,7 @@ const Button = ({
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       onClick={onClick}
       disabled={disabled}
+      style={style}
     >
       {children}
     </button>
