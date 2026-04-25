@@ -55,13 +55,13 @@ function Register() {
   });
 
   // Owner-only fields (shown when email domain is @mcgill.ca)
-  const [department, setDepartment]           = useState("");
+  const [department, setDepartment] = useState("");
   const [customDepartment, setCustomDepartment] = useState("");
-  const [title, setTitle]                     = useState("");
-  const [customTitle, setCustomTitle]         = useState("");
+  const [title, setTitle] = useState("");
+  const [customTitle, setCustomTitle] = useState("");
 
   const [showValidationError, setShowValidationError] = useState(false);
-  const [invalidEmailError, setInvalidEmailError]     = useState(false);
+  const [invalidEmailError, setInvalidEmailError] = useState(false);
 
   // True when the typed email is an owner email (@mcgill.ca, not @mail.mcgill.ca)
   const emailDomain = formData.email.split("@")[1]?.toLowerCase() ?? "";
@@ -105,7 +105,7 @@ function Register() {
     // {
     //   firstName, lastName, email, password,
     //   department: isOwnerEmail ? (department === "Other" ? customDepartment : department) : null,
-    //   title:      isOwnerEmail ? (title      === "Other" ? customTitle      : title)      : null,
+    //   title: isOwnerEmail ? (title === "Other" ? customTitle : title) : null,
     // }
     navigate("/dashboard");
   }
