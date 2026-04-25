@@ -203,6 +203,34 @@ export const myAppointments: BookingSlot[] = [
     bookedByUserName: "Ayaz Ciplak",
     bookedByUserEmail: "ayaz.ciplak@mail.mcgill.ca",
   },
+
+  // ## Joseph Vybihal's own appointments (booked with OTHER owners) ##
+  {
+    id: "my-j1",
+    date: new Date("2026-04-29"),
+    startTime: "2:00 PM",
+    endTime: "2:30 PM",
+    ownerName: "Sarah Thompson",
+    ownerEmail: "sarah.thompson@mcgill.ca",
+    status: "booked",
+    type: "office-hour",
+    title: "Assignment 3 Help",
+    bookedByUserName: "Prof. Joseph Vybihal",
+    bookedByUserEmail: "joseph.vybihal@mcgill.ca",
+  },
+  {
+    id: "my-j2",
+    date: new Date("2026-05-08"),
+    startTime: "10:00 AM",
+    endTime: "10:30 AM",
+    ownerName: "Prof. Derek Ruths",
+    ownerEmail: "derek.ruths@mcgill.ca",
+    status: "pending",
+    type: "meeting",
+    title: "Research Collaboration Discussion",
+    bookedByUserName: "Prof. Joseph Vybihal",
+    bookedByUserEmail: "joseph.vybihal@mcgill.ca",
+  },
 ];
 
 // ### Owner's own booking slots (owner dashboard) ###
