@@ -101,7 +101,7 @@ function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardPr
                 Email Owner
               </Button>
               <Button variant="danger" size="sm" onClick={() => onCancel?.(slot.id)}>
-                Cancel
+                Deregister
               </Button>
             </>
           )}

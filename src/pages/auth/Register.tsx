@@ -4,11 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 
 // Shared Tailwind class string for all text inputs in this form.
-// Defined once here so every <input> stays visually consistent.
 const INPUT_CLS =
   "py-[15px] px-4 border-[3px] border-dark-grey rounded-xl text-[1.05rem] " +
   "outline-none bg-transparent placeholder:text-dark-grey " +
   "focus:border-steel-blue transition-colors duration-200 box-border";
+
+// Same as INPUT_CLS but for <select> elements.
+const SELECT_CLS = INPUT_CLS + " cursor-pointer";
 
 const ALLOWED_EMAIL_DOMAINS = ["mcgill.ca", "mail.mcgill.ca"];
 
@@ -20,6 +22,29 @@ function isInstitutionalEmail(email: string) {
   return localPartValid && mcgillDomain;
 }
 
+const DEPARTMENTS = [
+  "School of Computer Science",
+  "Department of Mathematics and Statistics",
+  "Department of Physics",
+  "Department of Chemistry",
+  "Department of Biology",
+  "Department of Economics",
+  "Faculty of Engineering",
+  "Faculty of Arts",
+  "Faculty of Law",
+  "Faculty of Medicine and Health Sciences",
+  "Other",
+] as const;
+
+const TITLES = [
+  "Professor",
+  "Associate Professor",
+  "Assistant Professor",
+  "Teaching Assistant",
+  "Lecturer",
+  "Other",
+] as const;
+
 function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -28,17 +53,40 @@ function Register() {
     email: "",
     password: "",
   });
+
+  // Owner-only fields (shown when email domain is @mcgill.ca)
+  const [department, setDepartment]           = useState("");
+  const [customDepartment, setCustomDepartment] = useState("");
+  const [title, setTitle]                     = useState("");
+  const [customTitle, setCustomTitle]         = useState("");
+
   const [showValidationError, setShowValidationError] = useState(false);
-  const [invalidEmailError, setInvalidEmailError] = useState(false);
+  const [invalidEmailError, setInvalidEmailError]     = useState(false);
+
+  // True when the typed email is an owner email (@mcgill.ca, not @mail.mcgill.ca)
+  const emailDomain = formData.email.split("@")[1]?.toLowerCase() ?? "";
+  const isOwnerEmail = emailDomain === "mcgill.ca";
+
+  function clearErrors() {
+    setShowValidationError(false);
+    setInvalidEmailError(false);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const hasEmptyField = Object.values(formData).some(
-      (value) => value.trim() === "",
+    // Check core fields
+    const hasEmptyCore = Object.values(formData).some((v) => v.trim() === "");
+
+    // Check owner-specific fields only when relevant
+    const hasEmptyOwnerField = isOwnerEmail && (
+      !department ||
+      (department === "Other" && !customDepartment.trim()) ||
+      !title ||
+      (title === "Other" && !customTitle.trim())
     );
 
-    if (hasEmptyField) {
+    if (hasEmptyCore || hasEmptyOwnerField) {
       setShowValidationError(true);
       setInvalidEmailError(false);
       return;
@@ -50,10 +98,15 @@ function Register() {
       return;
     }
 
-    setShowValidationError(false);
-    setInvalidEmailError(false);
+    clearErrors();
 
     // TODO: replace with real auth API call when backend is connected
+    // Payload to POST /api/auth/register:
+    // {
+    //   firstName, lastName, email, password,
+    //   department: isOwnerEmail ? (department === "Other" ? customDepartment : department) : null,
+    //   title:      isOwnerEmail ? (title      === "Other" ? customTitle      : title)      : null,
+    // }
     navigate("/dashboard");
   }
 
@@ -112,11 +165,8 @@ function Register() {
                 className={`${INPUT_CLS} flex-1 min-w-0 max-sm:w-full`}
                 value={formData.firstName}
                 onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    firstName: e.target.value,
-                  }));
-                  if (showValidationError) setShowValidationError(false);
+                  setFormData((prev) => ({ ...prev, firstName: e.target.value }));
+                  clearErrors();
                 }}
               />
               <input
@@ -125,11 +175,8 @@ function Register() {
                 className={`${INPUT_CLS} flex-1 min-w-0 max-sm:w-full`}
                 value={formData.lastName}
                 onChange={(e) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    lastName: e.target.value,
-                  }));
-                  if (showValidationError) setShowValidationError(false);
+                  setFormData((prev) => ({ ...prev, lastName: e.target.value }));
+                  clearErrors();
                 }}
               />
             </div>
@@ -142,10 +189,87 @@ function Register() {
               value={formData.email}
               onChange={(e) => {
                 setFormData((prev) => ({ ...prev, email: e.target.value }));
-                if (showValidationError) setShowValidationError(false);
-                if (invalidEmailError) setInvalidEmailError(false);
+                clearErrors();
+                // Reset owner fields if the user switches away from @mcgill.ca
+                if (e.target.value.split("@")[1]?.toLowerCase() !== "mcgill.ca") {
+                  setDepartment("");
+                  setCustomDepartment("");
+                  setTitle("");
+                  setCustomTitle("");
+                }
               }}
             />
+
+            {/* ── Owner-only fields (revealed when @mcgill.ca email is typed) ── */}
+            {isOwnerEmail && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <label className="text-dark-grey text-[0.9rem] font-semibold pl-1">
+                    Department
+                  </label>
+                  <select
+                    className={`${SELECT_CLS} w-full`}
+                    value={department}
+                    onChange={(e) => {
+                      setDepartment(e.target.value);
+                      setCustomDepartment("");
+                      clearErrors();
+                    }}
+                  >
+                    <option value="" disabled>Select your department…</option>
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+
+                  {department === "Other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter your department"
+                      className={`${INPUT_CLS} w-full mt-2`}
+                      value={customDepartment}
+                      onChange={(e) => {
+                        setCustomDepartment(e.target.value);
+                        clearErrors();
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-dark-grey text-[0.9rem] font-semibold pl-1">
+                    Title
+                  </label>
+                  <select
+                    className={`${SELECT_CLS} w-full`}
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      setCustomTitle("");
+                      clearErrors();
+                    }}
+                  >
+                    <option value="" disabled>Select your title…</option>
+                    {TITLES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+
+                  {title === "Other" && (
+                    <input
+                      type="text"
+                      placeholder="Enter your title"
+                      className={`${INPUT_CLS} w-full mt-2`}
+                      value={customTitle}
+                      onChange={(e) => {
+                        setCustomTitle(e.target.value);
+                        clearErrors();
+                      }}
+                    />
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Password */}
             <input
@@ -155,7 +279,7 @@ function Register() {
               value={formData.password}
               onChange={(e) => {
                 setFormData((prev) => ({ ...prev, password: e.target.value }));
-                if (showValidationError) setShowValidationError(false);
+                clearErrors();
               }}
             />
 
