@@ -246,7 +246,7 @@ function Dashboard() {
           {/* Section 4: My Booking Slots (Type 3) */}
           <section style={{ marginBottom: "48px" }}>
             <div style={sectionRow}>
-              <h2 style={{ fontSize: "20px", margin: 0 }}>My Booking Slots</h2>
+              <h2 style={{ fontSize: "20px", margin: 0 }}>My Booking Slots (Office Hours)</h2>
               <Button
                 variant="secondary"
                 size="sm"
@@ -270,7 +270,7 @@ function Dashboard() {
           {/* Section 5: My Meeting Sequences (Type 2) */}
           <section style={{ marginBottom: "48px" }}>
             <div style={sectionRow}>
-              <h2 style={{ fontSize: "20px", margin: 0 }}>My Meeting Sequences</h2>
+              <h2 style={{ fontSize: "20px", margin: 0 }}>My Meeting Sequences (Group Meetings)</h2>
               <Button
                 variant="secondary"
                 size="sm"
