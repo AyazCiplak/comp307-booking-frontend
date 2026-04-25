@@ -35,6 +35,12 @@ function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Filter appointments to only those belonging to the currently logged-in user.
+  // (The real API will do this server-side; here we replicate that behaviour with mock data.)
+  const myBookings = myAppointments.filter(
+    (slot) => slot.bookedByUserEmail === user?.email,
+  );
+
   // ## Local state for mock interactions ## 
   const [requests, setRequests] = useState<PendingRequest[]>(pendingRequests);
   const [sequences] = useState<MeetingSequence[]>(ownerMeetingSequences);
@@ -114,9 +120,9 @@ function Dashboard() {
       <section style={{ marginBottom: "48px" }}>
         <h2 style={sectionHeading}>My Appointments</h2>
 
-        {myAppointments.length > 0 ? (
+        {myBookings.length > 0 ? (
           <div style={GRID}>
-            {myAppointments.map((slot) => (
+            {myBookings.map((slot) => (
               <BookingSlotCard
                 key={slot.id}
                 slot={slot}
