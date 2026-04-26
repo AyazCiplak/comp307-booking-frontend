@@ -21,9 +21,8 @@ import GroupBooking from "./pages/shared/GroupBooking.tsx";
 
 // Owner-only pages
 import CreateSlot from "./pages/shared/owner/CreateSlot.tsx";
+import ConfirmGroupTime from "./pages/shared/owner/ConfirmGroupTime.tsx";
 
-// Temporary component showcase — remove before final submission
-import Temp from "./pages/public/temp/Temp.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -50,10 +49,8 @@ createRoot(document.getElementById("root")!).render(
 
             {/* Owner-only pages */}
             <Route path="/owner/create-slot" element={<CreateSlot />} />
+            <Route path="/owner/confirm-group/:sequenceId" element={<ConfirmGroupTime />} />
           </Route>
-
-          {/* Temporary component showcase — remove before final submission */}
-          <Route path="/public/temp" element={<Temp />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
