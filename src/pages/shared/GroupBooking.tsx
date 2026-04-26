@@ -7,9 +7,11 @@ import { useAuth } from "../../context/AuthContext";
 import type { BookingSlot } from "../../types/booking";
 
 /**
- * Group Booking page (/invite/:sequenceId).
+ * Group Availability page (/invite/:sequenceId).
  * Reached by clicking an owner-generated invite URL (Type 2 meeting sequence).
- * Shows all available time slots for the sequence and lets users sign up.
+ * Shows all proposed time slot options for the sequence and lets users mark
+ * which ones they are available for (when2meet style).
+ * The owner then reviews availability and picks a final time on the dashboard.
  *
  * sequenceId comes from the URL param — e.g. /invite/seq-1
  */
@@ -20,11 +22,11 @@ function GroupBooking() {
 
   const sequence = sequenceId ? meetingSequenceById[sequenceId] : undefined;
 
-  // Local slot state so we can reflect sign-up changes immediately in the UI.
+  // Local slot state so we can reflect availability changes immediately in the UI.
   // TODO: replace with real API calls when backend is connected.
   const [slots, setSlots] = useState<BookingSlot[]>(sequence?.slots ?? []);
 
-  function handleSignUp(slotId: string) {
+  function handleMarkAvailable(slotId: string) {
     if (!user) return;
     setSlots((prev) =>
       prev.map((s) => {
@@ -38,8 +40,8 @@ function GroupBooking() {
         };
       })
     );
-    // TODO: POST /api/group-slots/:slotId/signup
-    console.log("Signed up for slot:", slotId, "as", user.email);
+    // TODO: POST /api/group-slots/:slotId/availability
+    console.log("Marked available for slot:", slotId, "as", user.email);
   }
 
   // Case: Sequence not found
@@ -64,7 +66,7 @@ function GroupBooking() {
     );
   }
 
-  function isSignedUp(slot: BookingSlot) {
+  function isMarkedAvailable(slot: BookingSlot) {
     return (slot.registeredUserIds ?? []).includes(user?.email ?? "");
   }
 
@@ -86,10 +88,19 @@ function GroupBooking() {
           background: "#f7f7f7", borderRadius: "8px",
           padding: "8px 14px", fontSize: "14px", color: "#555",
         }}>
-          <span>👥 Max {sequence.userCeiling} per slot</span>
+          <span>👥 Max {sequence.userCeiling} per option</span>
           <span>·</span>
-          <span>📅 {slots.length} time slot{slots.length !== 1 ? "s" : ""}</span>
+          <span>📅 {slots.length} time option{slots.length !== 1 ? "s" : ""}</span>
         </div>
+      </div>
+
+      {/* Instructions banner */}
+      <div style={{
+        background: "#e8f0f7", borderRadius: "10px",
+        padding: "12px 16px", fontSize: "14px", color: "#507da7",
+        marginBottom: "24px", fontWeight: 500,
+      }}>
+        📌 Mark all the time options you are available for. The organiser will pick a final time based on responses.
       </div>
 
       {/* Slot list */}
@@ -98,7 +109,7 @@ function GroupBooking() {
           const registered = slot.registeredUserIds?.length ?? 0;
           const ceiling = slot.maxUsers ?? sequence.userCeiling;
           const full = isFull(slot);
-          const alreadyIn = isSignedUp(slot);
+          const alreadyMarked = isMarkedAvailable(slot);
 
           const dateLabel = new Date(slot.date).toLocaleDateString("en-CA", {
             weekday: "long", month: "long", day: "numeric",
@@ -119,7 +130,7 @@ function GroupBooking() {
                       {slot.startTime} – {slot.endTime}
                     </p>
 
-                    {/* Registration fill bar */}
+                    {/* Availability fill bar */}
                     <div style={{ marginBottom: "6px" }}>
                       <div style={{
                         height: "6px", borderRadius: "999px",
@@ -135,20 +146,20 @@ function GroupBooking() {
                         }} />
                       </div>
                       <p style={{ fontSize: "12px", color: "#8e8e8e", margin: "4px 0 0" }}>
-                        {registered} / {ceiling} signed up
+                        {registered} / {ceiling} available
                       </p>
                     </div>
                   </div>
 
                   {/* Action */}
                   <div style={{ display: "flex", alignItems: "center" }}>
-                    {alreadyIn ? (
+                    {alreadyMarked ? (
                       <span style={{
                         fontSize: "13px", fontWeight: 600,
                         padding: "6px 14px", borderRadius: "999px",
                         background: "#e8f0f7", color: "#507da7",
                       }}>
-                        ✓ Signed up
+                        ✓ Available
                       </span>
                     ) : full ? (
                       <span style={{
@@ -159,8 +170,8 @@ function GroupBooking() {
                         Full
                       </span>
                     ) : (
-                      <Button variant="primary" size="sm" onClick={() => handleSignUp(slot.id)}>
-                        Sign Up
+                      <Button variant="primary" size="sm" onClick={() => handleMarkAvailable(slot.id)}>
+                        Mark Available
                       </Button>
                     )}
                   </div>

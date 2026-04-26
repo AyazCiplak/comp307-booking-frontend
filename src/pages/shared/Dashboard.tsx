@@ -297,23 +297,23 @@ function Dashboard() {
             )}
           </section>
 
-          {/* Section 5: My Meeting Sequences (Type 2) */}
+          {/* Section 5: My Pending Group Meetings (Type 2 — not yet finalized) */}
           <section style={{ marginBottom: "48px" }}>
             <div style={sectionRow}>
-              <h2 style={{ fontSize: "20px", margin: 0 }}>My Meeting Sequences (Group Meetings)</h2>
+              <h2 style={{ fontSize: "20px", margin: 0 }}>My Pending Group Meetings</h2>
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => navigate("/owner/create-slot")}
               >
-                + Create Sequence
+                + Create Group Meeting
               </Button>
             </div>
 
-            {sequences.length > 0 ? (
+            {sequences.filter(seq => !seq.finalized).length > 0 ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {sequences.map((seq) => {
-                  const filledSlots = seq.slots.filter(
+                {sequences.filter(seq => !seq.finalized).map((seq) => {
+                  const respondedSlots = seq.slots.filter(
                     (s) => (s.registeredUserIds?.length ?? 0) > 0,
                   ).length;
 
@@ -337,7 +337,7 @@ function Dashboard() {
                             padding: "3px 10px", borderRadius: "999px",
                             background: "#e8f0f7", color: "#507da7",
                           }}>
-                            {seq.slots.length} slot{seq.slots.length !== 1 ? "s" : ""}
+                            {seq.slots.length} option{seq.slots.length !== 1 ? "s" : ""}
                           </span>
                         </div>
                       </Card.Header>
@@ -347,8 +347,8 @@ function Dashboard() {
                           display: "flex", gap: "24px", fontSize: "14px", color: "#555",
                           marginBottom: "12px",
                         }}>
-                          <span>👥 Max {seq.userCeiling} per slot</span>
-                          <span>📋 {filledSlots}/{seq.slots.length} slots with sign-ups</span>
+                          <span>👥 Max {seq.userCeiling} per option</span>
+                          <span>📋 {respondedSlots}/{seq.slots.length} options with availability responses</span>
                         </div>
 
                         {/* Invite URL row */}
@@ -368,16 +368,26 @@ function Dashboard() {
                             size="sm"
                             onClick={() => handleCopyLink(seq)}
                           >
-                            {copiedId === seq.id ? "✓ Copied!" : "Copy Link"}
+                            {copiedId === seq.id ? "Copied!" : "Copy Link"}
                           </Button>
                         </div>
                       </Card.Content>
+
+                      <Card.Footer>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => navigate(`/owner/confirm-group/${seq.id}`)}
+                        >
+                          Review &amp; Confirm Time
+                        </Button>
+                      </Card.Footer>
                     </Card>
                   );
                 })}
               </div>
             ) : (
-              emptyNote("You have not created any meeting sequences yet.")
+              emptyNote("You have no pending group meetings.")
             )}
           </section>
         </>

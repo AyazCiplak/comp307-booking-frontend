@@ -82,14 +82,14 @@ function CreateSlot() {
 
   // Shared
   const [slotKind, setSlotKind] = useState<SlotKind>("office-hour");
-  const [error, setError]       = useState("");
+  const [error, setError] = useState("");
 
   // Type 2 (group meeting)
-  const [pickDate, setPickDate]     = useState<Date>(new Date(today));
-  const [pickStart, setPickStart]   = useState("09:00");
-  const [pickEnd, setPickEnd]       = useState("10:00");
-  const [slotList, setSlotList]     = useState<SlotEntry[]>([]);
-  const [seqName, setSeqName]       = useState("");
+  const [pickDate, setPickDate] = useState<Date>(new Date(today));
+  const [pickStart, setPickStart] = useState("09:00");
+  const [pickEnd, setPickEnd] = useState("10:00");
+  const [slotList, setSlotList] = useState<SlotEntry[]>([]);
+  const [seqName, setSeqName] = useState("");
   const [userCeiling, setUserCeiling] = useState("5");
 
   // Type 3 (office hours)
@@ -101,11 +101,11 @@ function CreateSlot() {
   const [numWeeks, setNumWeeks] = useState("4");
 
   // Success (type 2 only)
-  const [createdUrl, setCreatedUrl]   = useState<string | null>(null);
+  const [createdUrl, setCreatedUrl] = useState<string | null>(null);
   const [createdName, setCreatedName] = useState<string | null>(null);
-  const [copiedUrl, setCopiedUrl]     = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
   // Prevents double-submit on the "Create Sequence & Get Link" button.
-  const [submitting, setSubmitting]   = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Helpers - type 2
   function addSlot() {
@@ -325,7 +325,7 @@ function CreateSlot() {
               <div>
                 <p style={{ fontWeight: 600, margin: "0 0 2px", fontSize: "15px" }}>Group Meeting</p>
                 <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
-                  Add specific date/time slots, set a user ceiling per slot, get a shareable invite link.
+                  Propose slot options, let invited users mark their availability (when2meet style), then confirm the best time.
                 </p>
               </div>
             </label>
@@ -399,9 +399,9 @@ function CreateSlot() {
           <Card className="mb-5">
             <Card.Header>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Scheduled Slots</p>
+                <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Proposed Slot Options</p>
                 <span style={{ fontSize: "13px", color: "#8e8e8e" }}>
-                  {slotList.length} slot{slotList.length !== 1 ? "s" : ""} added
+                  {slotList.length} option{slotList.length !== 1 ? "s" : ""} added
                 </span>
               </div>
             </Card.Header>

@@ -311,6 +311,7 @@ export const ownerMeetingSequences: MeetingSequence[] = [
     userCeiling: 5,
     inviteUrl: `${window.location.origin}/invite/seq-1`,
     createdAt: new Date("2026-04-15"),
+    finalized: false,
     slots: [
       {
         id: "gs-1",
@@ -342,7 +343,12 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         title: "Midterm Review Sessions",
         sequenceId: "seq-1",
         maxUsers: 5,
-        registeredUserIds: ["jane.smith@mail.mcgill.ca"],
+        registeredUserIds: [
+          "jane.smith@mail.mcgill.ca",
+          "alice.wong@mail.mcgill.ca",
+          "carla.diaz@mail.mcgill.ca",
+          "ayaz.ciplak@mail.mcgill.ca",
+        ],
       },
       {
         id: "gs-3",
@@ -356,7 +362,10 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         title: "Midterm Review Sessions",
         sequenceId: "seq-1",
         maxUsers: 5,
-        registeredUserIds: [],
+        registeredUserIds: [
+          "bob.jones@mail.mcgill.ca",
+          "alice.wong@mail.mcgill.ca",
+        ],
       },
     ],
   },
@@ -368,6 +377,7 @@ export const ownerMeetingSequences: MeetingSequence[] = [
     userCeiling: 3,
     inviteUrl: `${window.location.origin}/invite/seq-2`,
     createdAt: new Date("2026-04-20"),
+    finalized: false,
     slots: [
       {
         id: "gs-4",
@@ -381,7 +391,10 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         title: "Project Consultation Q&A",
         sequenceId: "seq-2",
         maxUsers: 3,
-        registeredUserIds: [],
+        registeredUserIds: [
+          "ayaz.ciplak@mail.mcgill.ca",
+          "carla.diaz@mail.mcgill.ca",
+        ],
       },
       {
         id: "gs-5",
@@ -395,7 +408,11 @@ export const ownerMeetingSequences: MeetingSequence[] = [
         title: "Project Consultation Q&A",
         sequenceId: "seq-2",
         maxUsers: 3,
-        registeredUserIds: [],
+        registeredUserIds: [
+          "ayaz.ciplak@mail.mcgill.ca",
+          "jane.smith@mail.mcgill.ca",
+          "bob.jones@mail.mcgill.ca",
+        ],
       },
     ],
   },
