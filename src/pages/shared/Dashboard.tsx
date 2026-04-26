@@ -10,7 +10,7 @@ import {
   ownerMeetingSequences,
   pendingRequests,
 } from "../../data/mockSlots"; // Temp mock data import
-import type { PendingRequest, MeetingSequence } from "../../types/booking";
+import type { BookingSlot, PendingRequest, MeetingSequence } from "../../types/booking";
 
 // TODO: Make sure this grid is flexible for different media types (e.g. laptop vs tablet)
 const GRID: React.CSSProperties = {
@@ -43,9 +43,11 @@ function Dashboard() {
   );
 
   // ## Local state for mock interactions ## 
-  const [requests, setRequests] = useState<PendingRequest[]>(pendingRequests);
-  const [sequences] = useState<MeetingSequence[]>(ownerMeetingSequences);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [requests, setRequests]       = useState<PendingRequest[]>(pendingRequests);
+  // ownerSlots is kept in state so accepted requests can push new personal meeting slots into it.
+  const [myOwnerSlots, setMyOwnerSlots] = useState<BookingSlot[]>(ownerSlots);
+  const [sequences]                   = useState<MeetingSequence[]>(ownerMeetingSequences);
+  const [copiedId, setCopiedId]       = useState<string | null>(null);
 
   // ## Stub handlers (replace with API calls when backend is ready) ## 
   function handleCancel(slotId: string) {
@@ -54,12 +56,33 @@ function Dashboard() {
   }
 
   function handleDelete(slotId: string) {
-    console.log("Delete slot:", slotId);
+    // Remove from the owner's slot list immediately (optimistic update).
+    setMyOwnerSlots((prev) => prev.filter((s) => s.id !== slotId));
     // TODO: DELETE /api/slots/:slotId → send mailto: to booker if booked
+    console.log("Delete slot:", slotId);
   }
 
   function handleAcceptRequest(req: PendingRequest) {
+    // Remove the request from the pending list.
     setRequests((prev) => prev.filter((r) => r.id !== req.id));
+
+    // Create a new confirmed personal meeting slot from the accepted request
+    // and push it into "My Booking Slots" immediately.
+    const newSlot: BookingSlot = {
+      id: `accepted-${req.id}`,
+      date: req.requestedDate,
+      startTime: req.requestedStartTime,
+      endTime: req.requestedEndTime,
+      ownerName: req.ownerName,
+      ownerEmail: req.ownerEmail,
+      status: "booked",
+      type: "meeting",
+      title: `Personal Meeting with ${req.requesterName}`,
+      bookedByUserName: req.requesterName,
+      bookedByUserEmail: req.requesterEmail,
+    };
+    setMyOwnerSlots((prev) => [newSlot, ...prev]);
+
     // TODO: POST /api/requests/:id/accept → creates BookingSlot + sends mailto: to requester
     window.open(
       `mailto:${req.requesterEmail}?subject=Meeting Request Accepted&body=Hi ${req.requesterName},%0A%0AYour meeting request for ${req.requestedDate.toLocaleDateString()} at ${req.requestedStartTime} has been accepted!%0A%0ABest,%0A${user?.name}`,
@@ -263,9 +286,9 @@ function Dashboard() {
               </Button>
             </div>
 
-            {ownerSlots.length > 0 ? (
+            {myOwnerSlots.length > 0 ? (
               <div style={GRID}>
-                {ownerSlots.map((slot) => (
+                {myOwnerSlots.map((slot) => (
                   <BookingSlotCard key={slot.id} slot={slot} onDelete={handleDelete} />
                 ))}
               </div>
