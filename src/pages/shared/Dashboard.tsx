@@ -24,6 +24,7 @@ const GRID: React.CSSProperties = {
  *
  * Sections (in order):
  *  1. "My Appointments" -> all users: slots already booked (confirmed)
+ *  ---> Can show ANY type of CONFIRMED meeting the current individual has booked  
  *  2. "Find a Slot" -> all users: call-to-action (button) to browse owners list
  *  3. "Pending Requests" -> OWNERS ONLY: incoming Type 1 requests to accept/decline
  *  4. "My Booking Slots" -> OWNERS ONLY: type 3 office-hour slots they created
@@ -249,10 +250,10 @@ function Dashboard() {
             )}
           </section>
 
-          {/* Section 4: My Booking Slots (Type 3) */}
+          {/* Section 4: My Booking Slots (Type 1, Type 3) [TODO: Extend to also display confirmed type 2] */}
           <section style={{ marginBottom: "48px" }}>
             <div style={sectionRow}>
-              <h2 style={{ fontSize: "20px", margin: 0 }}>My Booking Slots (Office Hours)</h2>
+              <h2 style={{ fontSize: "20px", margin: 0 }}>My Booking Slots</h2>
               <Button
                 variant="secondary"
                 size="sm"
