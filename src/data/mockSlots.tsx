@@ -240,6 +240,21 @@ export const myAppointments: BookingSlot[] = [
  * Shown in "My Booking Slots" on the Dashboard when role === "owner".
  */
 export const ownerSlots: BookingSlot[] = [
+  // Type 1 — accepted personal meeting (moved from Pending Requests)
+  {
+    id: "os-pm1",
+    date: new Date("2026-04-30"),
+    startTime: "11:00 AM",
+    endTime: "11:30 AM",
+    ownerName: "Prof. Vybihal",
+    ownerEmail: "joseph.vybihal@mcgill.ca",
+    status: "booked",
+    type: "meeting",
+    title: "Personal Meeting with Alice Wong",
+    bookedByUserName: "Alice Wong",
+    bookedByUserEmail: "alice.wong@mail.mcgill.ca",
+  },
+  // Type 3 — office-hour slots
   {
     id: "os-1",
     date: new Date("2026-04-29"),
