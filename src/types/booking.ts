@@ -45,8 +45,8 @@ export interface BookingSlot {
 
   // Type 2 (group) specific
   sequenceId?: string; // links back to a MeetingSequence by id
-  maxUsers?: number; // user ceiling for this slot (inherits from sequence)
-  registeredUserIds?: string[]; // list of user emails who signed up
+  maxUsers?: number; // max users who can mark availability for this slot (inherits from sequence)
+  registeredUserIds?: string[]; // emails of users who marked themselves available for this slot
 }
 
 /** A single day cell on a calendar view. */
@@ -72,6 +72,13 @@ export interface MeetingSequence {
   userCeiling: number; // max users allowed per slot
   inviteUrl: string; // generated URL, e.g. /invite/seq-1
   createdAt: Date;
+  /** Set to true once the owner has picked a final time via ConfirmGroupTime.
+   *  Finalized sequences are hidden from "My Pending Group Meetings" and a
+   *  confirmed BookingSlot is created instead.
+   *  TODO: persist this flag on the backend (currently in-memory only). */
+  finalized?: boolean;
+  /** ID of the BookingSlot (within `slots`) chosen as the confirmed meeting time. */
+  finalizedSlotId?: string;
 }
 
 /**
