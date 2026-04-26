@@ -21,7 +21,7 @@ const STATUS_STYLES: Record<BookingSlot["status"], { label: string; color: strin
 // Human-readable slot type pill
 const TYPE_LABEL: Record<BookingSlot["type"], string> = {
   "office-hour": "Office Hour",
-  "meeting": "Meeting",
+  "meeting": "Personal Meeting",
   "group": "Group",
 };
 
@@ -48,9 +48,14 @@ function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardPr
             <h3 style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: 600 }}>
               {slot.title ?? TYPE_LABEL[slot.type]}
             </h3>
-            <span style={{ fontSize: "13px", color: "#8e8e8e" }}>
-              {slot.ownerName} · {slot.ownerEmail}
-            </span>
+            {/* Only show owner title when the viewer is NOT the owner
+                (e.g. in "My Appointments" — the slot belongs to someone else).
+                In "My Booking Slots" the owner is always the logged-in user, so it's redundant. */}
+            {!isOwner && (
+              <span style={{ fontSize: "13px", color: "#8e8e8e" }}>
+                {slot.ownerName} · {slot.ownerEmail}
+              </span>
+            )}
           </div>
 
           {/* Status badge */}
@@ -107,11 +112,18 @@ function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardPr
           )}
 
           {/* OWNER actions */}
-          {isOwner && slot.bookedByUserEmail && (
+          {/* Personal meeting (Type 1): show Email Booker button */}
+          {isOwner && slot.type === "meeting" && slot.bookedByUserEmail && (
             <Button variant="secondary" size="sm"
               onClick={() => window.open(`mailto:${slot.bookedByUserEmail}`)}>
               Email Booker
             </Button>
+          )}
+          {/* Office hours (Type 3): show registered count instead of Email Booker */}
+          {isOwner && slot.type === "office-hour" && (
+            <span style={{ fontSize: "13px", color: "#507da7", alignSelf: "center", fontWeight: 600 }}>
+              👥 {slot.registeredCount ?? 0} registered
+            </span>
           )}
           {isOwner && (
             <Button variant="danger" size="sm" onClick={() => onDelete?.(slot.id)}>
