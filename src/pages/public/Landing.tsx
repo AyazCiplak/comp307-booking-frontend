@@ -32,17 +32,15 @@ function Landing() {
 
         {/* Description */}
         <p className="text-base leading-relaxed mb-9">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis blandit
-          est eu maximus porttitor. Morbi convallis blandit velit a faucibus.
-          Sed turpis libero, pellentesque quis interdum eu, eleifend eget arcu.
-          Nunc diam leo, gravida vel finibus ac, porta vel libero. Cras porta
-          cursus felis, ut iaculis eros placerat eu. Donec non tempus est.
-          Nullam in aliquet ipsum. Donec porttitor tellus nisl, non posuere est
-          elementum vitae.
+          The official booking platform for the McGill School of Computer Science. Log in with your 
+          <span className="font-bold">@mcgill.ca</span> or <span className="font-bold">@mail.mcgill.ca</span> email to instantly reserve office hours, coordinate group meetings, 
+          and manage your academic appointments without the back-and-forth of email. Once registered as a user, 
+          you can browse available slots or request appointments directly. As an owner (Prof. or TA), you can 
+          also create your own slots to keep your schedule in sync. 
         </p>
 
         {/* Action buttons */}
-        <div className="flex gap-[150px] justify-center max-sm:flex-col max-sm:gap-5 max-sm:items-center">
+        <div className="flex gap-[150px] justify-center mt-4 max-sm:flex-col max-sm:gap-5 max-sm:items-center">
           <Link to="/auth/login" className={linkBtnCls}>
             Log In
           </Link>
