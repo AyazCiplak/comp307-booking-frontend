@@ -1,7 +1,10 @@
+// Programmed by Rhea Talwar — wired to real API by Ayaz Ciplak
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
+import { apiRegister } from "../../api/auth";
+import { useAuth } from "../../context/AuthContext";
 
 // Shared Tailwind class string for all text inputs in this form.
 const INPUT_CLS =
@@ -47,6 +50,8 @@ const TITLES = [
 
 function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -62,6 +67,8 @@ function Register() {
 
   const [showValidationError, setShowValidationError] = useState(false);
   const [invalidEmailError, setInvalidEmailError] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // True when the typed email is an owner email (@mcgill.ca, not @mail.mcgill.ca)
   const emailDomain = formData.email.split("@")[1]?.toLowerCase() ?? "";
@@ -70,9 +77,10 @@ function Register() {
   function clearErrors() {
     setShowValidationError(false);
     setInvalidEmailError(false);
+    setApiError(null);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     // Check core fields
@@ -89,25 +97,35 @@ function Register() {
     if (hasEmptyCore || hasEmptyOwnerField) {
       setShowValidationError(true);
       setInvalidEmailError(false);
+      setApiError(null);
       return;
     }
 
     if (!isInstitutionalEmail(formData.email)) {
       setInvalidEmailError(true);
       setShowValidationError(false);
+      setApiError(null);
       return;
     }
 
     clearErrors();
 
-    // TODO: replace with real auth API call when backend is connected
-    // Payload to POST /api/auth/register:
-    // {
-    //   firstName, lastName, email, password,
-    //   department: isOwnerEmail ? (department === "Other" ? customDepartment : department) : null,
-    //   title: isOwnerEmail ? (title === "Other" ? customTitle : title) : null,
-    // }
-    navigate("/dashboard");
+    // Resolve final dept / title values (handle the "Other" free-text case)
+    const finalDept = isOwnerEmail ? (department === "Other" ? customDepartment.trim() : department) : "";
+    const finalTitle = isOwnerEmail ? (title === "Other" ? customTitle.trim() : title) : "";
+
+    setIsLoading(true);
+    try {
+      // POST /api/account/register -> LoggedInResponse (includes accessToken)
+      // Note: firstName / lastName are derived server-side from the email address.
+      const data = await apiRegister(formData.email, formData.password, finalDept, finalTitle);
+      login(data); // stores user + token in AuthContext + localStorage
+      navigate("/dashboard");
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -136,10 +154,9 @@ function Register() {
             className="w-[min(450px,100%)] flex flex-col gap-5"
             onSubmit={handleSubmit}
           >
-            {/* Visually hidden heading for screen readers */}
             <h2 className="sr-only">Register</h2>
 
-            {/* Error banners */}
+            {/* Case: Client-side: empty fields */}
             {showValidationError && (
               <div
                 className="bg-[#e9b9b6] text-[#3a1f1f] rounded-2xl px-[22px] py-[18px] text-[1.05rem] leading-[1.3]"
@@ -148,6 +165,7 @@ function Register() {
                 Error: Please fill out all fields before registering.
               </div>
             )}
+            {/* Case: Client-side: bad email domain */}
             {invalidEmailError && (
               <div
                 className="bg-[#e9b9b6] text-[#3a1f1f] rounded-2xl px-[22px] py-[18px] text-[1.05rem] leading-[1.3]"
@@ -156,8 +174,17 @@ function Register() {
                 Error: Please use your McGill Email.
               </div>
             )}
+            {/* Case: API / server error (email taken, etc.) */}
+            {apiError && (
+              <div
+                className="bg-[#e9b9b6] text-[#3a1f1f] rounded-2xl px-[22px] py-[18px] text-[1.05rem] leading-[1.3]"
+                role="alert"
+              >
+                {apiError}
+              </div>
+            )}
 
-            {/* First + Last name row */}
+            {/* First + Last name row (used for UX only — backend derives names from email) */}
             <div className="flex gap-[15px] max-sm:flex-col max-sm:gap-5">
               <input
                 type="text"
@@ -295,9 +322,10 @@ function Register() {
             <Button
               type="submit"
               size="lg"
+              disabled={isLoading}
               className="self-center hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]"
             >
-              Register
+              {isLoading ? "Creating account…" : "Register"}
             </Button>
           </form>
         </section>
