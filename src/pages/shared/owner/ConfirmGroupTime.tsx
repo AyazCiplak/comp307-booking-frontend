@@ -1,4 +1,3 @@
-
 // Programmed by Ayaz Ciplak
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -21,10 +20,10 @@ import type {
  * Confirm Group Time page (/owner/confirm-group/:groupMeetingInstanceID) — Owner only.
  *
  * Flow:
- *  1. apiGetGroupInstanceByID  → instance name / owner info
- *  2. apiGetGroupProposals     → all GROUP_PROPOSAL slots
- *  3. apiGetAllProposalBookers → map slotID → Booking[] (who marked available)
- *  4. "Pick This Time" → apiSelectGroupProposalSlot (PATCH)
+ *  1. apiGetGroupInstanceByID -> instance name / owner info
+ *  2. apiGetGroupProposals -> all GROUP_PROPOSAL slots
+ *  3. apiGetAllProposalBookers -> map slotID -> Booking[] (who marked available)
+ *  4. "Pick This Time" -> apiSelectGroupProposalSlot (PATCH)
  *     - Backend marks chosen slot as GROUP_SELECTED, deletes other proposals + their bookings
  *     - Frontend opens a mailto: to all attendees, shows success screen
  */
@@ -34,13 +33,13 @@ function ConfirmGroupTime() {
   const { user } = useAuth();
 
   // ### STATE ###
-  const [instance, setInstance]     = useState<BackendGroupMeetingInstance | null>(null);
-  const [slots, setSlots]           = useState<BackendBookingSlot[]>([]);
-  // Map of bookingSlotID (string) → array of Booking objects (who marked available)
-  const [bookers, setBookers]       = useState<Record<string, BackendBooking[]>>({});
+  const [instance, setInstance] = useState<BackendGroupMeetingInstance | null>(null);
+  const [slots, setSlots] = useState<BackendBookingSlot[]>([]);
+  // Map of bookingSlotID (string) -> array of Booking objects (who marked available)
+  const [bookers, setBookers] = useState<Record<string, BackendBooking[]>>({});
 
-  const [isLoading, setIsLoading]   = useState(true);
-  const [loadError, setLoadError]   = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null); // slotID being confirmed
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -129,7 +128,7 @@ function ConfirmGroupTime() {
   if (isLoading) {
     return (
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "40px 20px", textAlign: "center" }}>
-        <p style={{ color: "#8e8e8e", paddingTop: "60px" }}>Loading group meeting…</p>
+        <p style={{ color: "#8e8e8e", paddingTop: "60px" }}>Loading group meeting...</p>
       </div>
     );
   }
@@ -331,7 +330,7 @@ function ConfirmGroupTime() {
                     onClick={() => handlePickTime(slot)}
                     disabled={isConfirming || available.length === 0}
                   >
-                    {isConfirming ? "Confirming…" : "Pick This Time"}
+                    {isConfirming ? "Confirming..." : "Pick This Time"}
                   </Button>
                 </Card.Footer>
               </Card>
