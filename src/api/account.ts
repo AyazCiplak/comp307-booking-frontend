@@ -1,7 +1,7 @@
 // Programmed by Ayaz Ciplak
 import { tokenFetch } from "./client";
 
-/** Shape returned by /getAllOwners and /getFreeSlotOwners — mirrors UserInformation.java */
+/** Shape returned by /getAllOwners and /getFreeSlotOwners - mirrors UserInformation.java */
 export interface OwnerInfo {
   email: string;
   firstName: string;

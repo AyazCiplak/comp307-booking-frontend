@@ -9,6 +9,11 @@ const BASE_URL = "http://localhost:8081"; // locally-running backend
  *  - HTTP error with Spring JSON body -> extracts the "message" field
  *  - HTTP error with plain-text body -> uses the raw text
  *  - Fallback -> "HTTP <status>" string
+ *
+ * NOTE on Content-Type:
+ *  The default is application/json. If `options.headers` is provided it
+ *  REPLACES the default (object spread is a shallow merge), so callers can
+ *  override the content type by including a `headers` object in options.
  */
 export async function apiFetch(path: string, options?: RequestInit) {
   let res: Response;
@@ -46,8 +51,29 @@ export async function apiFetch(path: string, options?: RequestInit) {
       message = text.trim() || `HTTP ${res.status}`;
     }
 
+    // 401 means the stored token is invalid or the backend restarted and wiped its DB.
+    // Auto-clear localStorage and send the user back to the login page.
+    if (res.status === 401) {
+      localStorage.removeItem("booksocs_user");
+      window.location.href = "/auth/login";
+    }
+
     throw new Error(message);
   }
 
   return res.json();
+}
+
+/**
+ * Sends a bearer token as a raw text/plain body.
+ * 
+ * Use this helper for every POST endpoint whose entire body is just a token, 
+ * since Spring's StringHttpMessageConverter has issues reading raw bytes with quotes. 
+ */
+export function tokenFetch(path: string, token: string): Promise<unknown> {
+  return apiFetch(path, {
+    method: "POST",
+    body: token,
+    headers: { "Content-Type": "text/plain" }, // overrides the application/json default
+  });
 }

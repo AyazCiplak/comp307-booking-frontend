@@ -1,5 +1,5 @@
 // Programmed by Ayaz Ciplak
-import { apiFetch } from "./client";
+import { apiFetch, tokenFetch } from "./client";
 
 /** POST /api/account/register - creates a new account and returns a LoggedInResponse. */
 export const apiRegister = (
@@ -22,7 +22,4 @@ export const apiLogin = (email: string, password: string) =>
 
 /** POST /api/account/logout - invalidates the server-side token. */
 export const apiLogout = (token: string) =>
-  apiFetch("/api/account/logout", {
-    method: "POST",
-    body: JSON.stringify(token),
-  });
+  tokenFetch("/api/account/logout", token);
