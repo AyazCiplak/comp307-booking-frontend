@@ -1,3 +1,5 @@
+//Programmed by Rhea Talwar
+
 import { Link } from "react-router-dom";
 
 /**
@@ -17,7 +19,6 @@ function Landing() {
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-8">
       <main className="w-full max-w-[980px] text-center">
-
         {/* Title + logo */}
         <div className="flex items-center justify-center gap-7 mb-6 max-sm:flex-col max-sm:gap-5">
           <h1 className="text-dark-red text-[5rem] leading-[0.9] m-0 font-extrabold text-left max-sm:text-center max-sm:text-[3.5rem]">
@@ -32,11 +33,15 @@ function Landing() {
 
         {/* Description */}
         <p className="text-base leading-relaxed mb-9">
-          The official booking platform for the McGill School of Computer Science. Log in with your 
-          <span className="font-bold">@mcgill.ca</span> or <span className="font-bold">@mail.mcgill.ca</span> email to instantly reserve office hours, coordinate group meetings, 
-          and manage your academic appointments without the back-and-forth of email. Once registered as a user, 
-          you can browse available slots or request appointments directly. As an owner (Prof. or TA), you can 
-          also create your own slots to keep your schedule in sync. 
+          The official booking platform for the McGill School of Computer
+          Science. Log in with your
+          <span className="font-bold">@mcgill.ca</span> or{" "}
+          <span className="font-bold">@mail.mcgill.ca</span> email to instantly
+          reserve office hours, coordinate group meetings, and manage your
+          academic appointments without the back-and-forth of email. Once
+          registered as a user, you can browse available slots or request
+          appointments directly. As an owner (Prof. or TA), you can also create
+          your own slots to keep your schedule in sync.
         </p>
 
         {/* Action buttons */}
@@ -48,7 +53,6 @@ function Landing() {
             Register
           </Link>
         </div>
-
       </main>
     </div>
   );

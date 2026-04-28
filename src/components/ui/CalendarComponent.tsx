@@ -1,3 +1,5 @@
+// Programmed by Rhea Talwar
+
 import { useState } from "react";
 import Calendar, { type CalendarProps } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -73,7 +75,9 @@ function CalendarComponent({
     <div className="calendar-wrapper">
       <Calendar
         value={selectedDate}
-        defaultActiveStartDate={new Date(initial.getFullYear(), initial.getMonth(), 1)}
+        defaultActiveStartDate={
+          new Date(initial.getFullYear(), initial.getMonth(), 1)
+        }
         minDate={minDate}
         onChange={(value) => {
           if (value instanceof Date) {
