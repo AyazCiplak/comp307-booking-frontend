@@ -311,6 +311,8 @@ export interface BackendGroupMeetingInstance {
   maxUsers: number;
   inviteToken: string;
   createdAt: string;
+  /** True once the owner has confirmed a final slot. Invite URL becomes invalid. */
+  finalized: boolean;
 }
 
 /**
