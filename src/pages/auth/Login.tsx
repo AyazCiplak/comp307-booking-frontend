@@ -1,6 +1,9 @@
+// Programmed by Rhea Talwar and Ayaz Ciplak
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import { useState, type FormEvent } from "react";
+import { apiLogin } from "../../api/auth";
+import { useAuth } from "../../context/AuthContext";
 
 const INPUT_CLS =
   "py-[15px] px-4 border-[3px] border-dark-grey rounded-xl text-[1.05rem] " +
@@ -9,31 +12,38 @@ const INPUT_CLS =
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
   const [showValidationError, setShowValidationError] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const hasEmptyField = Object.values(formData).some(
-      (value) => value.trim() === "",
-    );
-
+    // Client-side: make sure both fields are filled before hitting the network.
+    const hasEmptyField = Object.values(formData).some((v) => v.trim() === "");
     if (hasEmptyField) {
       setShowValidationError(true);
+      setApiError(null);
       return;
     }
-
     setShowValidationError(false);
+    setApiError(null);
 
-    // TODO: replace with real auth API call when backend is connected
-
-    navigate("/dashboard");
+    setIsLoading(true);
+    try {
+      // POST /api/account/login → LoggedInResponse (email, firstName, lastName, owner, accessToken …)
+      const data = await apiLogin(formData.email, formData.password);
+      login(data); // stores user + token in AuthContext + localStorage
+      navigate("/dashboard");
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -62,16 +72,25 @@ function Login() {
             className="w-[min(450px,100%)] flex flex-col gap-5"
             onSubmit={handleSubmit}
           >
-            {/* Visually hidden heading for screen readers */}
-            <h2 className="sr-only">Register</h2>
+            <h2 className="sr-only">Log in</h2>
 
-            {/* Error banners */}
+            {/* Case: Client-side validation error */}
             {showValidationError && (
               <div
                 className="bg-[#e9b9b6] text-[#3a1f1f] rounded-2xl px-[22px] py-[18px] text-[1.05rem] leading-[1.3]"
                 role="alert"
               >
-                Error: Please fill out all fields before registering.
+                Error: Please fill out all fields before logging in.
+              </div>
+            )}
+
+            {/* Case: API / server error (wrong password, account not found, etc.) */}
+            {apiError && (
+              <div
+                className="bg-[#e9b9b6] text-[#3a1f1f] rounded-2xl px-[22px] py-[18px] text-[1.05rem] leading-[1.3]"
+                role="alert"
+              >
+                {apiError}
               </div>
             )}
 
@@ -84,6 +103,7 @@ function Login() {
               onChange={(e) => {
                 setFormData((prev) => ({ ...prev, email: e.target.value }));
                 if (showValidationError) setShowValidationError(false);
+                if (apiError) setApiError(null);
               }}
             />
 
@@ -96,10 +116,11 @@ function Login() {
               onChange={(e) => {
                 setFormData((prev) => ({ ...prev, password: e.target.value }));
                 if (showValidationError) setShowValidationError(false);
+                if (apiError) setApiError(null);
               }}
             />
 
-            {/* Already have an account */}
+            {/* Case: No account yet */}
             <Link
               to="/auth/register"
               className="inline-block mt-3 text-steel-blue no-underline text-[0.95rem] hover:underline"
@@ -111,9 +132,10 @@ function Login() {
             <Button
               type="submit"
               size="lg"
+              disabled={isLoading}
               className="self-center hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]"
             >
-              Log In
+              {isLoading ? "Logging in…" : "Log In"}
             </Button>
           </form>
         </section>
