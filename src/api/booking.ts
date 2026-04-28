@@ -18,7 +18,7 @@ export interface BackendBookingSlot {
     title: string;
   };
   /** Jackson uses getter name "slotType" (not the field name "type"). */
-  slotType: "OFFICE_HOURS" | "GROUP_PROPOSAL" | "GROUP_SELECTED";
+  slotType: "OFFICE_HOURS" | "GROUP_PROPOSAL" | "GROUP_SELECTED" | "MEETING";
   slotStatus: "AVAILABLE" | "BOOKED" | "CANCELLED";
   title: string | null;
   startDateTime: string; // ISO local datetime e.g. "2026-04-28T10:00:00"
@@ -47,6 +47,7 @@ export function mapBackendSlot(b: BackendBookingSlot): BookingSlot {
     OFFICE_HOURS: "office-hour",
     GROUP_PROPOSAL: "group",
     GROUP_SELECTED: "group",
+    MEETING: "meeting",
   };
 
   return {
@@ -131,7 +132,7 @@ export interface BackendBooking {
   registeredAt: string; // "YYYY-MM-DD"
 }
 
-/** A Request entity -> returned by POST /api/requests/getAllPendingRequests. */
+/** A Request entity -> returned by POST /api/requests/getAllPendingRequests / getMyRequests. */
 export interface BackendRequest {
   id: number;
   requester: {
@@ -150,6 +151,8 @@ export interface BackendRequest {
   requestedEnd: string;
   message: string | null;
   pending: boolean;
+  /** Full status string serialised from the RequestStatus enum. */
+  status: "PENDING" | "ACCEPTED" | "DECLINED";
   createdAt: string;
   updatedAt: string;
 }
@@ -239,6 +242,58 @@ export const apiDeclineRequest = (requestId: number, token: string) =>
     body: token,
     headers: { "Content-Type": "text/plain" },
   });
+
+/**
+ * POST /api/requests/requestBooking
+ * Sends a Type 1 meeting request from the logged-in user to the given owner.
+ * Body uses RequestBookingRequest DTO: { requesterToken, ownerEmail, startTime, endTime, message }.
+ * startTime / endTime must be ISO local datetime strings: "YYYY-MM-DDTHH:MM:SS"
+ */
+export const apiRequestBooking = (payload: {
+  requesterToken: string;
+  ownerEmail: string;
+  startTime: string;
+  endTime: string;
+  message: string | null;
+}) =>
+  apiFetch("/api/requests/requestBooking", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+/**
+ * POST /api/requests/getMyRequests
+ * Returns all PENDING requests sent by the authenticated user (excludes accepted/declined).
+ * Body = raw token.
+ */
+export const apiGetMyRequests = (token: string): Promise<BackendRequest[]> =>
+  tokenFetch("/api/requests/getMyRequests", token) as Promise<BackendRequest[]>;
+
+/**
+ * DELETE /api/requests/{requestId}
+ * Allows the original requester to cancel (delete) their own pending request.
+ * Body = raw token.
+ */
+export const apiCancelRequest = (requestId: number, token: string) =>
+  apiFetch(`/api/requests/${requestId}`, {
+    method: "DELETE",
+    body: token,
+    headers: { "Content-Type": "text/plain" },
+  });
+
+/**
+ * POST /api/booking/owner/getSlotBookers
+ * Returns a map of bookingSlotID -> Booking for every MEETING-type slot owned by the
+ * authenticated owner.  Used by the dashboard to display who booked each 1:1 meeting.
+ * Jackson serialises Long map keys as JSON number keys (JS sees them as string keys in an object).
+ * Body = raw token.
+ */
+export const apiGetSlotBookers = (
+  token: string,
+): Promise<Record<string, BackendBooking>> =>
+  tokenFetch("/api/booking/owner/getSlotBookers", token) as Promise<
+    Record<string, BackendBooking>
+  >;
 
 /**
  * POST /api/account/listBooked

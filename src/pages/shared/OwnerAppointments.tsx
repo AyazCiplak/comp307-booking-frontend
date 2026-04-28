@@ -42,7 +42,7 @@ function OwnerAppointments() {
   // keep a local set so the UI can reflect "you already booked this".
   const [bookedIds, setBookedIds] = useState<Set<string>>(new Set());
 
-  // Per-slot booking feedback: maps slotId → "success" | "error message"
+  // Per-slot booking feedback: maps slotId -> "success" | "error message"
   const [bookFeedback, setBookFeedback] = useState<Record<string, string>>({});
 
   // Fetch owner's available slots AND the user's existing bookings in parallel.
