@@ -101,7 +101,7 @@ function BrowseOwners() {
                   {owner.title}{owner.department ? ` · ${owner.department}` : ""}
                 </p>
                 <Button variant="primary" size="sm" onClick={() => handleSelect(owner.email)}>
-                  View Slots →
+                  View Slots -
                 </Button>
               </Card.Content>
             </Card>
