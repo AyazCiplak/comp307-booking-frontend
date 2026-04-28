@@ -1,5 +1,5 @@
 // Programmed by Ayaz Ciplak
-import { apiFetch } from "./client";
+import { apiFetch, tokenFetch } from "./client";
 import type { BookingSlot } from "../types/booking";
 
 // ## Backend entity shapes ##
@@ -113,3 +113,19 @@ export const apiCreateRecurringSlots = (payload: {
     method: "POST",
     body: JSON.stringify(payload),
   });
+
+/**
+ * POST /api/account/listBooked
+ * Returns the current user's booked items (BookingSlot entities + Request entities).
+ * Body is a raw token string -> uses tokenFetch.
+ *
+ * The backend returns List<BookingsInterface> which is a mix of BookingSlot and Request
+ * objects serialized as JSON. Result typed 'loosely' so the caller can filter for
+ * items with a `bookingSlotID` field to find already-booked slots.
+ */
+export const apiListUserBookings = (
+  token: string,
+): Promise<{ bookingSlotID?: number }[]> =>
+  tokenFetch("/api/account/listBooked", token) as Promise<
+    { bookingSlotID?: number }[]
+  >;

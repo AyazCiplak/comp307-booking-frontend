@@ -6,7 +6,7 @@ import Card from "../../components/ui/Card";
 import BookingSlotCard from "../../components/calendar/BookingSlotCard";
 import { useAuth } from "../../context/AuthContext";
 import type { OwnerInfo } from "../../api/account";
-import { apiGetOwnerSlots, apiBookSlot } from "../../api/booking";
+import { apiGetOwnerSlots, apiBookSlot, apiListUserBookings } from "../../api/booking";
 import type { BookingSlot } from "../../types/booking";
 
 /**
@@ -45,12 +45,26 @@ function OwnerAppointments() {
   // Per-slot booking feedback: maps slotId → "success" | "error message"
   const [bookFeedback, setBookFeedback] = useState<Record<string, string>>({});
 
-  // Fetch slots 
+  // Fetch owner's available slots AND the user's existing bookings in parallel.
+  // The bookings are used to pre-mark already-booked slots so the Book button
+  // appears disabled immediately on load (not just after clicking).
   useEffect(() => {
     if (!user?.token) return;
 
-    apiGetOwnerSlots(ownerEmail, user.token)
-      .then(setSlots)
+    Promise.all([
+      apiGetOwnerSlots(ownerEmail, user.token),
+      apiListUserBookings(user.token),
+    ])
+      .then(([fetchedSlots, userBookings]) => {
+        setSlots(fetchedSlots);
+        // Items with a bookingSlotID are BookingSlot entities (not Request entities).
+        const preBooked = new Set<string>(
+          userBookings
+            .filter((item) => item.bookingSlotID != null)
+            .map((item) => String(item.bookingSlotID)),
+        );
+        setBookedIds(preBooked);
+      })
       .catch((err: unknown) => {
         setFetchError(
           err instanceof Error ? err.message : "Failed to load slots.",
@@ -73,7 +87,7 @@ function OwnerAppointments() {
     }
   }
 
-  // ── split into available / already-booked-by-me ────────────────────────────
+  // Split into available / "already booked by me"
   const availableSlots = slots.filter((s) => s.status === "available");
 
   // Render 
