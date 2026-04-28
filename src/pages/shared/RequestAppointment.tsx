@@ -226,7 +226,7 @@ function RequestAppointment() {
           {/* Actions */}
           <div style={{ display: "flex", gap: "12px" }}>
             <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? "Sending…" : "Send Request"}
+              {submitting ? "Sending..." : "Send Request"}
             </Button>
             <Button variant="ghost" onClick={() => navigate(`/browse/${ownerUsername}`)} disabled={submitting}>
               Cancel

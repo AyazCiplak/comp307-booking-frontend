@@ -35,7 +35,7 @@ function Login() {
 
     setIsLoading(true);
     try {
-      // POST /api/account/login -> LoggedInResponse (email, firstName, lastName, owner, accessToken …)
+      // POST /api/account/login -> LoggedInResponse (email, firstName, lastName, owner, accessToken ...)
       const data = await apiLogin(formData.email, formData.password);
       login(data); // stores user + token in AuthContext + localStorage
       navigate("/dashboard");
@@ -135,7 +135,7 @@ function Login() {
               disabled={isLoading}
               className="self-center hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]"
             >
-              {isLoading ? "Logging in…" : "Log In"}
+              {isLoading ? "Logging in..." : "Log In"}
             </Button>
           </form>
         </section>

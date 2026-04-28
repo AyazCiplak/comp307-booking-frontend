@@ -45,11 +45,11 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/browse/:ownerUsername/request" element={<RequestAppointment />} />
 
             {/* Group meeting invite links (Type 2) */}
-            <Route path="/invite/:sequenceId" element={<GroupBooking />} />
+            <Route path="/invite/:inviteToken" element={<GroupBooking />} />
 
             {/* Owner-only pages */}
             <Route path="/owner/create-slot" element={<CreateSlot />} />
-            <Route path="/owner/confirm-group/:sequenceId" element={<ConfirmGroupTime />} />
+            <Route path="/owner/confirm-group/:groupMeetingInstanceID" element={<ConfirmGroupTime />} />
           </Route>
         </Routes>
       </BrowserRouter>

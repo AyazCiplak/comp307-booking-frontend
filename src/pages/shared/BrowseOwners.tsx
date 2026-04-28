@@ -105,7 +105,7 @@ function BrowseOwners() {
         <Card>
           <Card.Content>
             <p style={{ color: "#8e8e8e", textAlign: "center", padding: "24px 0" }}>
-              Loading owners…
+              Loading owners...
             </p>
           </Card.Content>
         </Card>

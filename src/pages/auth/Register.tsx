@@ -217,7 +217,7 @@ function Register() {
                       clearErrors();
                     }}
                   >
-                    <option value="" disabled>Select your department…</option>
+                    <option value="" disabled>Select your department...</option>
                     {DEPARTMENTS.map((d) => (
                       <option key={d} value={d}>{d}</option>
                     ))}
@@ -250,7 +250,7 @@ function Register() {
                       clearErrors();
                     }}
                   >
-                    <option value="" disabled>Select your title…</option>
+                    <option value="" disabled>Select your title...</option>
                     {TITLES.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
@@ -299,7 +299,7 @@ function Register() {
               disabled={isLoading}
               className="self-center hover:underline max-sm:w-full max-sm:max-w-[280px] max-sm:text-[1.4rem]"
             >
-              {isLoading ? "Creating account…" : "Register"}
+              {isLoading ? "Creating account..." : "Register"}
             </Button>
           </form>
         </section>

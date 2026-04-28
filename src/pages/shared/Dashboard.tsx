@@ -19,10 +19,14 @@ import {
   apiDeclineRequest,
   mapBackendSlot,
 } from "../../api/booking";
+import {
+  apiGetMyGroupInstances,
+} from "../../api/booking";
 import type {
   BackendBooking,
   BackendRequest,
   BackendBookingSlot,
+  BackendGroupMeetingInstance,
 } from "../../api/booking";
 import type { BookingSlot } from "../../types/booking";
 
@@ -54,6 +58,7 @@ function Dashboard() {
   const [myRequests, setMyRequests] = useState<BackendRequest[]>([]); // user's outgoing pending requests
   const [ownerSlots, setOwnerSlots] = useState<BookingSlot[]>([]);
   const [pendingRequests, setPendingRequests] = useState<BackendRequest[]>([]);
+  const [groupMeetings, setGroupMeetings] = useState<BackendGroupMeetingInstance[]>([]);
 
   // ### UI STATE ###
   const [isLoading, setIsLoading] = useState(true);
@@ -78,28 +83,37 @@ function Dashboard() {
     const fetchRequests = isOwner
       ? apiGetPendingRequests(user.token)
       : Promise.resolve([] as BackendRequest[]);
+    const fetchGroupMeetings = isOwner
+      ? apiGetMyGroupInstances(user.token)
+      : Promise.resolve([] as BackendGroupMeetingInstance[]);
 
-    Promise.all([fetchBookings, fetchMyReqs, fetchSlots, fetchCounts, fetchBookers, fetchRequests])
-      .then(([bookings, myReqs, slots, counts, bookers, requests]) => {
+    Promise.all([fetchBookings, fetchMyReqs, fetchSlots, fetchCounts, fetchBookers, fetchRequests, fetchGroupMeetings])
+      .then(([bookings, myReqs, slots, counts, bookers, requests, groups]) => {
         setMyBookings(bookings);
         setMyRequests(myReqs);
         // Merge booking counts + booker info into each mapped slot
+        // Exclude GROUP_PROPOSAL slots from "My Booking Slots" - those belong in
+        // "My Pending Group Meetings" until the owner confirms a final time.
+        // GROUP_SELECTED (confirmed) slots DO appear here.
         setOwnerSlots(
-          (slots as BackendBookingSlot[]).map((s) => {
-            const mapped = mapBackendSlot(s);
-            const count = (counts  as Record<string, number>)[String(s.bookingSlotID)] ?? 0;
-            const booker = (bookers as Record<string, BackendBooking>)[String(s.bookingSlotID)];
-            return {
-              ...mapped,
-              registeredCount: count,
-              bookedByUserName: booker
-                ? `${booker.reservee.firstName} ${booker.reservee.lastName}`
-                : undefined,
-              bookedByUserEmail: booker?.reservee.email,
-            };
-          }),
+          (slots as BackendBookingSlot[])
+            .filter((s) => s.slotType !== "GROUP_PROPOSAL")
+            .map((s) => {
+              const mapped = mapBackendSlot(s);
+              const count = (counts  as Record<string, number>)[String(s.bookingSlotID)] ?? 0;
+              const booker = (bookers as Record<string, BackendBooking>)[String(s.bookingSlotID)];
+              return {
+                ...mapped,
+                registeredCount: count,
+                bookedByUserName: booker
+                  ? `${booker.reservee.firstName} ${booker.reservee.lastName}`
+                  : undefined,
+                bookedByUserEmail: booker?.reservee.email,
+              };
+            }),
         );
         setPendingRequests(requests);
+        setGroupMeetings(groups as BackendGroupMeetingInstance[]);
       })
       .catch((err: unknown) => {
         setLoadError(
@@ -149,19 +163,21 @@ function Dashboard() {
         apiGetSlotBookers(token),
       ]);
       setOwnerSlots(
-        (newSlots as BackendBookingSlot[]).map((s) => {
-          const mapped = mapBackendSlot(s);
-          const count = (newCounts  as Record<string, number>)[String(s.bookingSlotID)] ?? 0;
-          const booker = (newBookers as Record<string, BackendBooking>)[String(s.bookingSlotID)];
-          return {
-            ...mapped,
-            registeredCount: count,
-            bookedByUserName: booker
-              ? `${booker.reservee.firstName} ${booker.reservee.lastName}`
-              : undefined,
-            bookedByUserEmail: booker?.reservee.email,
-          };
-        }),
+        (newSlots as BackendBookingSlot[])
+          .filter((s) => s.slotType !== "GROUP_PROPOSAL")
+          .map((s) => {
+            const mapped = mapBackendSlot(s);
+            const count = (newCounts  as Record<string, number>)[String(s.bookingSlotID)] ?? 0;
+            const booker = (newBookers as Record<string, BackendBooking>)[String(s.bookingSlotID)];
+            return {
+              ...mapped,
+              registeredCount: count,
+              bookedByUserName: booker
+                ? `${booker.reservee.firstName} ${booker.reservee.lastName}`
+                : undefined,
+              bookedByUserEmail: booker?.reservee.email,
+            };
+          }),
       );
 
       // Notify requester via mailto:
@@ -237,7 +253,7 @@ function Dashboard() {
     return (
       <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "40px 20px" }}>
         <p style={{ color: "#8e8e8e", textAlign: "center", paddingTop: "60px" }}>
-          Loading dashboard…
+          Loading dashboard...
         </p>
       </div>
     );
@@ -280,7 +296,7 @@ function Dashboard() {
       <section style={{ marginBottom: "48px" }}>
         <h2 style={sectionHeading}>My Appointments</h2>
 
-        {myRequests.length === 0 && myBookings.length === 0 ? (
+        {myRequests.length === 0 && myBookings.filter((b) => b.bookingSlot.slotType !== "GROUP_PROPOSAL").length === 0 ? (
           emptyNote("You have no upcoming appointments.")
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -339,8 +355,11 @@ function Dashboard() {
               </Card>
             ))}
 
-            {/* Confirmed bookings (office hours + accepted 1:1s) */}
-            {myBookings.map((booking) => {
+            {/* Confirmed bookings (office hours + accepted 1:1s + confirmed group meetings).
+                GROUP_PROPOSAL bookings are hidden until the owner selects a time (-> GROUP_SELECTED). */}
+            {myBookings
+              .filter((b) => b.bookingSlot.slotType !== "GROUP_PROPOSAL")
+              .map((booking) => {
               const slot  = booking.bookingSlot;
               const owner = slot.owner;
               return (
@@ -518,7 +537,7 @@ function Dashboard() {
             )}
           </section>
 
-          {/* Section 5: My Pending Group Meetings (Type 2 — wired in next sprint) */}
+          {/* Section 5: My Pending Group Meetings (Type 2) */}
           <section style={{ marginBottom: "48px" }}>
             <div style={sectionRow}>
               <h2 style={{ fontSize: "20px", margin: 0 }}>My Pending Group Meetings</h2>
@@ -530,9 +549,70 @@ function Dashboard() {
                 + Create Group Meeting
               </Button>
             </div>
-            {emptyNote(
-              "Group meeting sequences will appear here once created. " +
-              'Use "Create Group Meeting" to set one up.',
+
+            {groupMeetings.length === 0 ? (
+              emptyNote(
+                "No group meetings yet. Use \"Create Group Meeting\" to set one up " +
+                "and share an invite link with participants.",
+              )
+            ) : (
+              <div style={GRID}>
+                {groupMeetings.map((gm) => {
+                  const inviteUrl = `${window.location.origin}/invite/${gm.inviteToken}`;
+                  return (
+                    <Card key={gm.groupMeetingInstanceID}>
+                      <Card.Header>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <p style={{ fontWeight: 700, fontSize: "15px", margin: 0 }}>
+                            {gm.name}
+                          </p>
+                          <span style={{
+                            fontSize: "11px", fontWeight: 700, padding: "2px 9px",
+                            borderRadius: "999px", background: "#e8f0f7", color: "#507da7",
+                            whiteSpace: "nowrap", marginLeft: "8px",
+                          }}>
+                            👥 Max {gm.maxUsers}
+                          </span>
+                        </div>
+                      </Card.Header>
+                      <Card.Content>
+                        {/* Invite URL row */}
+                        <div style={{
+                          display: "flex", alignItems: "center", gap: "8px",
+                          background: "#f7f7f7", borderRadius: "8px",
+                          padding: "8px 10px", marginBottom: "12px",
+                        }}>
+                          <span style={{
+                            flex: 1, fontSize: "12px", color: "#507da7",
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          }}>
+                            {inviteUrl}
+                          </span>
+                          <button
+                            style={{
+                              background: "none", border: "none", cursor: "pointer",
+                              fontSize: "12px", color: "#507da7", fontWeight: 600,
+                              padding: "2px 6px", fontFamily: "inherit", flexShrink: 0,
+                            }}
+                            onClick={() => navigator.clipboard.writeText(inviteUrl)}
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </Card.Content>
+                      <Card.Footer>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => navigate(`/owner/confirm-group/${gm.groupMeetingInstanceID}`)}
+                        >
+                          Confirm Time
+                        </Button>
+                      </Card.Footer>
+                    </Card>
+                  );
+                })}
+              </div>
             )}
           </section>
         </>

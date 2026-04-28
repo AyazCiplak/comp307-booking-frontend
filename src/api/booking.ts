@@ -295,6 +295,159 @@ export const apiGetSlotBookers = (
     Record<string, BackendBooking>
   >;
 
+// ## Group Meeting (Type 2) shapes + API ##
+
+/** The exact JSON shape Jackson emits for a GroupMeetingInstance entity. */
+export interface BackendGroupMeetingInstance {
+  groupMeetingInstanceID: number;
+  owner: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    department: string;
+    title: string;
+  };
+  name: string;
+  maxUsers: number;
+  inviteToken: string;
+  createdAt: string;
+  /** True once the owner has confirmed a final slot. Invite URL becomes invalid. */
+  finalized: boolean;
+}
+
+/**
+ * POST /api/groupMeetingInstances/create
+ * Creates a group meeting instance (name, maxUsers, inviteToken).
+ * Returns the saved GroupMeetingInstance including its generated ID.
+ */
+export const apiCreateGroupMeetingInstance = (payload: {
+  ownerToken: string;
+  name: string;
+  maxUsers: number;
+  inviteToken: string;
+}): Promise<BackendGroupMeetingInstance> =>
+  apiFetch("/api/groupMeetingInstances/create", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }) as Promise<BackendGroupMeetingInstance>;
+
+/**
+ * POST /api/booking/createGroupMeetingBookingProposalSlot
+ * Adds one proposal time-slot to an existing group meeting instance.
+ * startDateTime / endDateTime must be ISO local: "YYYY-MM-DDTHH:MM:SS"
+ */
+export const apiCreateGroupProposalSlot = (payload: {
+  groupMeetingInstanceID: number;
+  ownerToken: string;
+  title: string;
+  startDateTime: string;
+  endDateTime: string;
+}): Promise<BackendBookingSlot> =>
+  apiFetch("/api/booking/createGroupMeetingBookingProposalSlot", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }) as Promise<BackendBookingSlot>;
+
+/**
+ * POST /api/groupMeetingInstances/getMyInstances
+ * Returns all group meeting instances owned by the authenticated owner. Body = raw token.
+ */
+export const apiGetMyGroupInstances = (token: string): Promise<BackendGroupMeetingInstance[]> =>
+  tokenFetch("/api/groupMeetingInstances/getMyInstances", token) as Promise<
+    BackendGroupMeetingInstance[]
+  >;
+
+/**
+ * GET /api/groupMeetingInstances/inviteToken?invite={token}
+ * Resolves an invite token -> GroupMeetingInstance. Used by GroupBooking page.
+ * Note: GET with query param (no auth body needed at this endpoint).
+ */
+export const apiGetGroupInstanceByInviteToken = (
+  inviteToken: string,
+): Promise<BackendGroupMeetingInstance> =>
+  apiFetch(`/api/groupMeetingInstances/inviteToken?invite=${encodeURIComponent(inviteToken)}`, {
+    method: "GET",
+  }) as Promise<BackendGroupMeetingInstance>;
+
+/**
+ * GET /api/groupMeetingInstances/{id}
+ * Returns a group meeting instance by its database ID.
+ */
+export const apiGetGroupInstanceByID = (id: number): Promise<BackendGroupMeetingInstance> =>
+  apiFetch(`/api/groupMeetingInstances/${id}`, { method: "GET" }) as Promise<
+    BackendGroupMeetingInstance
+  >;
+
+/**
+ * POST /api/booking/getAllGroupMeetingProposalsForMeetingInstanceID/{id}
+ * Returns all GROUP_PROPOSAL BookingSlots for the given instance. Body = raw token.
+ */
+export const apiGetGroupProposals = (
+  groupMeetingInstanceID: number,
+  token: string,
+): Promise<BackendBookingSlot[]> =>
+  apiFetch(
+    `/api/booking/getAllGroupMeetingProposalsForMeetingInstanceID/${groupMeetingInstanceID}`,
+    { method: "POST", body: token, headers: { "Content-Type": "text/plain" } },
+  ) as Promise<BackendBookingSlot[]>;
+
+/**
+ * POST /api/booking/markAvailabilityForProposal
+ * User marks themselves available on a GROUP_PROPOSAL slot.
+ * Body uses CreateBookingRequest DTO: { bookingSlotID, reserveeToken }.
+ */
+export const apiMarkAvailabilityForProposal = (
+  bookingSlotID: number,
+  reserveeToken: string,
+): Promise<BackendBooking> =>
+  apiFetch("/api/booking/markAvailabilityForProposal", {
+    method: "POST",
+    body: JSON.stringify({ bookingSlotID, reserveeToken }),
+  }) as Promise<BackendBooking>;
+
+/**
+ * PATCH /api/booking/selectGroupMeetingProposalSlot/{bookingSlotId}
+ * Owner selects the winning proposal slot. Deletes all other proposals + their bookings.
+ * Body = raw owner token.
+ */
+export const apiSelectGroupProposalSlot = (slotId: number, ownerToken: string) =>
+  apiFetch(`/api/booking/selectGroupMeetingProposalSlot/${slotId}`, {
+    method: "PATCH",
+    body: ownerToken,
+    headers: { "Content-Type": "text/plain" },
+  });
+
+/**
+ * POST /api/booking/getGroupProposalCounts/{groupMeetingInstanceID}
+ * Returns map of bookingSlotID -> count for GROUP_PROPOSAL slots. Any auth'd user.
+ * Body = raw token.
+ */
+export const apiGetGroupProposalCounts = (
+  groupMeetingInstanceID: number,
+  token: string,
+): Promise<Record<string, number>> =>
+  apiFetch(`/api/booking/getGroupProposalCounts/${groupMeetingInstanceID}`, {
+    method: "POST",
+    body: token,
+    headers: { "Content-Type": "text/plain" },
+  }) as Promise<Record<string, number>>;
+
+/**
+ * POST /api/booking/getAllProposalBookers/{groupMeetingInstanceID}
+ * Returns map of bookingSlotID -> List<Booking> for GROUP_PROPOSAL slots.
+ * Used by ConfirmGroupTime to show who marked available on each slot.
+ * Body = raw owner token.
+ */
+export const apiGetAllProposalBookers = (
+  groupMeetingInstanceID: number,
+  ownerToken: string,
+): Promise<Record<string, BackendBooking[]>> =>
+  apiFetch(`/api/booking/getAllProposalBookers/${groupMeetingInstanceID}`, {
+    method: "POST",
+    body: ownerToken,
+    headers: { "Content-Type": "text/plain" },
+  }) as Promise<Record<string, BackendBooking[]>>;
+
 /**
  * POST /api/account/listBooked
  * Returns the current user's booked items (BookingSlot entities + Request entities).
