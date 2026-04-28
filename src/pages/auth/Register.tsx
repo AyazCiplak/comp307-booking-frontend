@@ -53,8 +53,6 @@ function Register() {
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
     email: "",
     password: "",
   });
@@ -183,30 +181,6 @@ function Register() {
                 {apiError}
               </div>
             )}
-
-            {/* First + Last name row (used for UX only — backend derives names from email) */}
-            <div className="flex gap-[15px] max-sm:flex-col max-sm:gap-5">
-              <input
-                type="text"
-                placeholder="First Name"
-                className={`${INPUT_CLS} flex-1 min-w-0 max-sm:w-full`}
-                value={formData.firstName}
-                onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, firstName: e.target.value }));
-                  clearErrors();
-                }}
-              />
-              <input
-                type="text"
-                placeholder="Last Name"
-                className={`${INPUT_CLS} flex-1 min-w-0 max-sm:w-full`}
-                value={formData.lastName}
-                onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, lastName: e.target.value }));
-                  clearErrors();
-                }}
-              />
-            </div>
 
             {/* Email */}
             <input
