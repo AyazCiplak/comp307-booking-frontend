@@ -51,9 +51,11 @@ function BrowseOwners() {
     );
   });
 
-  function handleSelect(email: string) {
-    const username = email.split("@")[0];
-    navigate(`/browse/${username}`);
+  // Pass the full OwnerInfo as navigation state so OwnerAppointments doesn't
+  // need a separate API call just to display the owner's name / title / dept.
+  function handleSelect(owner: OwnerInfo) {
+    const username = owner.email.split("@")[0];
+    navigate(`/browse/${username}`, { state: owner });
   }
 
   const GRID: React.CSSProperties = {
@@ -129,7 +131,7 @@ function BrowseOwners() {
               return (
                 <Card
                   key={owner.email}
-                  onClick={() => handleSelect(owner.email)}
+                  onClick={() => handleSelect(owner)}
                   className="cursor-pointer hover:shadow-md transition-shadow"
                 >
                   <Card.Header>
@@ -159,7 +161,7 @@ function BrowseOwners() {
                     <p style={{ fontSize: "14px", color: "#555", margin: "0 0 12px" }}>
                       {owner.department || "No department listed"}
                     </p>
-                    <Button variant="primary" size="sm" onClick={() => handleSelect(owner.email)}>
+                    <Button variant="primary" size="sm" onClick={() => handleSelect(owner)}>
                       View Slots →
                     </Button>
                   </Card.Content>
