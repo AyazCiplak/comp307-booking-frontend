@@ -61,7 +61,11 @@ export async function apiFetch(path: string, options?: RequestInit) {
     throw new Error(message);
   }
 
-  return res.json();
+  // 204 No Content (or any empty body) — don't try to parse JSON.
+  // JSON.parse returns `any`, so the overall return type stays `any` for callers.
+  const text = await res.text();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return text ? JSON.parse(text) : null;
 }
 
 /**

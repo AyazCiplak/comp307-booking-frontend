@@ -4,6 +4,7 @@ import CalendarComponent from "../../../components/ui/CalendarComponent.tsx";
 import Button from "../../../components/ui/Button.tsx";
 import Card from "../../../components/ui/Card.tsx";
 import { useAuth } from "../../../context/AuthContext.tsx";
+import { apiCreateRecurringSlots } from "../../../api/booking.ts";
 
 // Shared input style — matches Login / Register form inputs
 const INPUT_CLS =
@@ -50,8 +51,8 @@ function fmtDate(date: Date): string {
 function sameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
-    a.getMonth()    === b.getMonth()    &&
-    a.getDate()     === b.getDate()
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
   );
 }
 
@@ -159,11 +160,11 @@ function CreateSlot() {
   }
 
   const selectedDayCount = Object.keys(dayPattern).length;
-  const weeksNum          = parseInt(numWeeks) || 0;
-  const totalSlots3       = selectedDayCount * weeksNum;
+  const weeksNum = parseInt(numWeeks) || 0;
+  const totalSlots3 = selectedDayCount * weeksNum;
 
   // Submission handling 
-  function handleCreate() {
+  async function handleCreate() {
     setError("");
 
     if (slotKind === "group") {
@@ -193,36 +194,51 @@ function CreateSlot() {
     if (selectedDayCount === 0) { setError("Select at least one day of the week."); return; }
     for (const key of Object.keys(dayPattern)) {
       const { start, end } = dayPattern[Number(key)];
-      if (!start || !end)  { setError("Set start and end times for all selected days."); return; }
-      if (start >= end)    { setError("End time must be after start time for every day."); return; }
+      if (!start || !end) { setError("Set start and end times for all selected days."); return; }
+      if (start >= end) { setError("End time must be after start time for every day."); return; }
     }
-    if (!startDateStr)   { setError("Select a starting date."); return; }
-    if (weeksNum < 1)    { setError("Number of weeks must be at least 1."); return; }
+    if (!startDateStr) { setError("Select a starting date."); return; }
+    if (weeksNum < 1) { setError("Number of weeks must be at least 1."); return; }
 
-    // Generate all recurring slot dates
+    // Build the FIRST occurrence of each selected weekday at/after the start date.
+    // The backend takes this first-week list + weeksToRepeat and generates all
+    // subsequent occurrences itself (plusWeeks(i) in BookingService).
     const origin = new Date(startDateStr + "T00:00:00");
-    const generated: Array<{ date: string; startTime: string; endTime: string }> = [];
-    for (let week = 0; week < weeksNum; week++) {
-      const weekAnchor = addDays(origin, week * 7);
-      for (const key of Object.keys(dayPattern)) {
-        const dayVal  = Number(key);
-        const slotDate = getNextWeekday(weekAnchor, dayVal);
-        if (slotDate >= origin) {
-          generated.push({
-            date:      slotDate.toLocaleDateString(),
-            startTime: dayPattern[dayVal].start,
-            endTime:   dayPattern[dayVal].end,
-          });
-        }
+    const startDateTimes: string[] = [];
+    const endDateTimes: string[] = [];
+
+    for (const key of Object.keys(dayPattern)) {
+      const dayVal = Number(key);
+      const slotDate = getNextWeekday(origin, dayVal);
+      if (slotDate >= origin) {
+        const y = slotDate.getFullYear();
+        const mo = String(slotDate.getMonth() + 1).padStart(2, "0");
+        const d = String(slotDate.getDate()).padStart(2, "0");
+        startDateTimes.push(`${y}-${mo}-${d}T${dayPattern[dayVal].start}:00`);
+        endDateTimes.push(`${y}-${mo}-${d}T${dayPattern[dayVal].end}:00`);
       }
     }
-    // TODO: POST /api/slots (batch)
-    console.log("Office hours created:", {
-      owner: user?.email,
-      title: officeTitle.trim() || "Office Hours",
-      slots: generated,
-    });
-    navigate("/dashboard");
+
+    if (startDateTimes.length === 0) {
+      setError("No valid slot dates could be generated. Check your start date and selected days.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await apiCreateRecurringSlots({
+        ownerToken: user!.token,
+        title: officeTitle.trim() || "Office Hours",
+        startDateTimes,
+        endDateTimes,
+        weeksToRepeat: weeksNum,
+      });
+      navigate("/dashboard");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create slots. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function handleCopyUrl() {
@@ -254,7 +270,7 @@ function CreateSlot() {
                   {createdUrl}
                 </span>
                 <Button variant={copiedUrl ? "ghost" : "secondary"} size="sm" onClick={handleCopyUrl}>
-                  {copiedUrl ? "✓ Copied!" : "Copy Link"}
+                  {copiedUrl ? "Copied!" : "Copy Link"}
                 </Button>
               </div>
               <Button variant="primary" onClick={() => navigate("/dashboard")}>
