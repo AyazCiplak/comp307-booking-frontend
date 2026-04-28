@@ -50,7 +50,7 @@ function RequestAppointment() {
     }
 
     setError("");
-    // TODO: POST /api/requests → { ownerEmail, requestedDate, startTime, endTime, message }
+    // TODO: POST /api/requests -> { ownerEmail, requestedDate, startTime, endTime, message }
     // then send mailto: to owner notifying them of the request
     console.log("Meeting request submitted:", {
       requester: user?.email,

@@ -21,7 +21,7 @@ export interface LoggedInResponse {
   email: string;
   firstName: string;
   lastName: string;
-  owner: boolean;   // Jackson serialises isOwner() → "owner" (drops the "is" prefix)
+  owner: boolean;   // Jackson serialises isOwner() -> "owner" (drops the "is" prefix)
   department: string;
   title: string;
   accessToken: string;

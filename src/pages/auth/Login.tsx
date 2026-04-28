@@ -35,7 +35,7 @@ function Login() {
 
     setIsLoading(true);
     try {
-      // POST /api/account/login → LoggedInResponse (email, firstName, lastName, owner, accessToken …)
+      // POST /api/account/login -> LoggedInResponse (email, firstName, lastName, owner, accessToken …)
       const data = await apiLogin(formData.email, formData.password);
       login(data); // stores user + token in AuthContext + localStorage
       navigate("/dashboard");

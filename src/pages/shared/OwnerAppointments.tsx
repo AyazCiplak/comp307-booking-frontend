@@ -12,7 +12,7 @@ import type { BookingSlot } from "../../types/booking";
  * "Request a Meeting" call-to-action for Type 1 meeting requests.
  *
  * ownerUsername is the part before @ in the owner's @mcgill.ca email,
- * e.g. /browse/joseph.vybihal → joseph.vybihal@mcgill.ca
+ * e.g. /browse/joseph.vybihal -> joseph.vybihal@mcgill.ca
  */
 function OwnerAppointments() {
   const { ownerUsername } = useParams<{ ownerUsername: string }>();

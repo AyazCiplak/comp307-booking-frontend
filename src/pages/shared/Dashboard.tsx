@@ -52,13 +52,13 @@ function Dashboard() {
   // ## Stub handlers (replace with API calls when backend is ready) ## 
   function handleCancel(slotId: string) {
     console.log("Cancel booking:", slotId);
-    // TODO: DELETE /api/bookings/:slotId → send mailto: to owner
+    // TODO: DELETE /api/bookings/:slotId -> send mailto: to owner
   }
 
   function handleDelete(slotId: string) {
     // Remove from the owner's slot list immediately (optimistic update).
     setMyOwnerSlots((prev) => prev.filter((s) => s.id !== slotId));
-    // TODO: DELETE /api/slots/:slotId → send mailto: to booker if booked
+    // TODO: DELETE /api/slots/:slotId -> send mailto: to booker if booked
     console.log("Delete slot:", slotId);
   }
 
@@ -83,7 +83,7 @@ function Dashboard() {
     };
     setMyOwnerSlots((prev) => [newSlot, ...prev]);
 
-    // TODO: POST /api/requests/:id/accept → creates BookingSlot + sends mailto: to requester
+    // TODO: POST /api/requests/:id/accept -> creates BookingSlot + sends mailto: to requester
     window.open(
       `mailto:${req.requesterEmail}?subject=Meeting Request Accepted&body=Hi ${req.requesterName},%0A%0AYour meeting request for ${req.requestedDate.toLocaleDateString()} at ${req.requestedStartTime} has been accepted!%0A%0ABest,%0A${user?.name}`,
     );
@@ -91,7 +91,7 @@ function Dashboard() {
 
   function handleDeclineRequest(req: PendingRequest) {
     setRequests((prev) => prev.filter((r) => r.id !== req.id));
-    // TODO: POST /api/requests/:id/decline → sends mailto: to requester
+    // TODO: POST /api/requests/:id/decline -> sends mailto: to requester
     window.open(
       `mailto:${req.requesterEmail}?subject=Meeting Request Declined&body=Hi ${req.requesterName},%0A%0AUnfortunately your meeting request for ${req.requestedDate.toLocaleDateString()} at ${req.requestedStartTime} could not be accommodated at this time.%0A%0ABest,%0A${user?.name}`,
     );
