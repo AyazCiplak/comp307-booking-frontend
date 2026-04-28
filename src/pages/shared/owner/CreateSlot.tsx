@@ -4,7 +4,11 @@ import CalendarComponent from "../../../components/ui/CalendarComponent.tsx";
 import Button from "../../../components/ui/Button.tsx";
 import Card from "../../../components/ui/Card.tsx";
 import { useAuth } from "../../../context/AuthContext.tsx";
-import { apiCreateRecurringSlots } from "../../../api/booking.ts";
+import {
+  apiCreateRecurringSlots,
+  apiCreateGroupMeetingInstance,
+  apiCreateGroupProposalSlot,
+} from "../../../api/booking.ts";
 
 // Shared input style — matches Login / Register form inputs
 const INPUT_CLS =
@@ -175,18 +179,41 @@ function CreateSlot() {
         return;
       }
       setSubmitting(true);
-      const slugId = `${seqName.trim().toLowerCase().replace(/\s+/g, "-")}-${Date.now().toString(36)}`;
-      const url    = `${window.location.origin}/invite/${slugId}`;
-      setCreatedUrl(url);
-      setCreatedName(seqName.trim());
-      // TODO: POST /api/sequences
-      console.log("Group meeting created:", {
-        owner: user?.email,
-        name: seqName.trim(),
-        slots: slotList.map((s) => ({ date: fmtDate(s.date), startTime: s.startTime, endTime: s.endTime })),
-        userCeiling: Number(userCeiling),
-        inviteUrl: url,
-      });
+      try {
+        // Generate a URL-safe invite token from the name + a timestamp suffix
+        const inviteToken = `${seqName.trim().toLowerCase().replace(/\s+/g, "-")}-${Date.now().toString(36)}`;
+
+        // 1. Create the GroupMeetingInstance on the backend
+        const instance = await apiCreateGroupMeetingInstance({
+          ownerToken: user!.token,
+          name: seqName.trim(),
+          maxUsers: Number(userCeiling),
+          inviteToken,
+        });
+
+        // 2. Create one GROUP_PROPOSAL BookingSlot per time-slot entry (sequential
+        //    to avoid race conditions; only a handful of slots at most)
+        for (const s of slotList) {
+          const y = s.date.getFullYear();
+          const mo = String(s.date.getMonth() + 1).padStart(2, "0");
+          const d = String(s.date.getDate()).padStart(2, "0");
+          await apiCreateGroupProposalSlot({
+            groupMeetingInstanceID: instance.groupMeetingInstanceID,
+            ownerToken: user!.token,
+            title: seqName.trim(),
+            startDateTime: `${y}-${mo}-${d}T${s.startTime}:00`,
+            endDateTime: `${y}-${mo}-${d}T${s.endTime}:00`,
+          });
+        }
+
+        // 3. Show success screen with the invite URL
+        setCreatedUrl(`${window.location.origin}/invite/${instance.inviteToken}`);
+        setCreatedName(seqName.trim());
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to create group meeting. Please try again.");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
