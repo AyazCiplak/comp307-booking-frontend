@@ -8,8 +8,11 @@ import BookingSlotCard from "../../components/calendar/BookingSlotCard";
 import {
   apiGetMyBookings,
   apiUnbook,
+  apiGetMyRequests,
+  apiCancelRequest,
   apiGetOwnerOwnedSlots,
   apiGetSlotBookingCounts,
+  apiGetSlotBookers,
   apiCancelSlot,
   apiGetPendingRequests,
   apiAcceptRequest,
@@ -48,6 +51,7 @@ function Dashboard() {
 
   // ### DATA STATE ###
   const [myBookings, setMyBookings] = useState<BackendBooking[]>([]);
+  const [myRequests, setMyRequests] = useState<BackendRequest[]>([]); // user's outgoing pending requests
   const [ownerSlots, setOwnerSlots] = useState<BookingSlot[]>([]);
   const [pendingRequests, setPendingRequests] = useState<BackendRequest[]>([]);
 
@@ -61,25 +65,39 @@ function Dashboard() {
     if (!user?.token) return;
 
     const fetchBookings = apiGetMyBookings(user.token);
-    const fetchSlots    = isOwner
+    const fetchMyReqs = apiGetMyRequests(user.token);  // outgoing pending requests (all users)
+    const fetchSlots = isOwner
       ? apiGetOwnerOwnedSlots(user.token)
       : Promise.resolve([] as BackendBookingSlot[]);
-    const fetchCounts   = isOwner
+    const fetchCounts = isOwner
       ? apiGetSlotBookingCounts(user.token)
       : Promise.resolve({} as Record<string, number>);
+    const fetchBookers = isOwner
+      ? apiGetSlotBookers(user.token)
+      : Promise.resolve({} as Record<string, BackendBooking>);
     const fetchRequests = isOwner
       ? apiGetPendingRequests(user.token)
       : Promise.resolve([] as BackendRequest[]);
 
-    Promise.all([fetchBookings, fetchSlots, fetchCounts, fetchRequests])
-      .then(([bookings, slots, counts, requests]) => {
+    Promise.all([fetchBookings, fetchMyReqs, fetchSlots, fetchCounts, fetchBookers, fetchRequests])
+      .then(([bookings, myReqs, slots, counts, bookers, requests]) => {
         setMyBookings(bookings);
-        // Merge booking counts into each mapped slot so BookingSlotCard can show "X registered"
+        setMyRequests(myReqs);
+        // Merge booking counts + booker info into each mapped slot
         setOwnerSlots(
-          (slots as BackendBookingSlot[]).map((s) => ({
-            ...mapBackendSlot(s),
-            registeredCount: (counts as Record<string, number>)[String(s.bookingSlotID)] ?? 0,
-          })),
+          (slots as BackendBookingSlot[]).map((s) => {
+            const mapped = mapBackendSlot(s);
+            const count = (counts  as Record<string, number>)[String(s.bookingSlotID)] ?? 0;
+            const booker = (bookers as Record<string, BackendBooking>)[String(s.bookingSlotID)];
+            return {
+              ...mapped,
+              registeredCount: count,
+              bookedByUserName: booker
+                ? `${booker.reservee.firstName} ${booker.reservee.lastName}`
+                : undefined,
+              bookedByUserEmail: booker?.reservee.email,
+            };
+          }),
         );
         setPendingRequests(requests);
       })
@@ -121,6 +139,31 @@ function Dashboard() {
     try {
       await apiAcceptRequest(req.id, user.token);
       setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+
+      // Re-fetch slots + bookers so the new MEETING slot appears immediately
+      // without requiring a page reload.
+      const token = user.token;
+      const [newSlots, newCounts, newBookers] = await Promise.all([
+        apiGetOwnerOwnedSlots(token),
+        apiGetSlotBookingCounts(token),
+        apiGetSlotBookers(token),
+      ]);
+      setOwnerSlots(
+        (newSlots as BackendBookingSlot[]).map((s) => {
+          const mapped = mapBackendSlot(s);
+          const count = (newCounts  as Record<string, number>)[String(s.bookingSlotID)] ?? 0;
+          const booker = (newBookers as Record<string, BackendBooking>)[String(s.bookingSlotID)];
+          return {
+            ...mapped,
+            registeredCount: count,
+            bookedByUserName: booker
+              ? `${booker.reservee.firstName} ${booker.reservee.lastName}`
+              : undefined,
+            bookedByUserEmail: booker?.reservee.email,
+          };
+        }),
+      );
+
       // Notify requester via mailto:
       const date = new Date(req.requestedStart).toLocaleDateString("en-CA", {
         weekday: "short", month: "short", day: "numeric",
@@ -148,6 +191,18 @@ function Dashboard() {
       );
     } catch (err: unknown) {
       setActionError(err instanceof Error ? err.message : "Failed to decline request.");
+    }
+  }
+
+  /** Requester cancels their own outgoing pending request. */
+  async function handleCancelRequest(requestId: number) {
+    if (!user?.token) return;
+    setActionError(null);
+    try {
+      await apiCancelRequest(requestId, user.token);
+      setMyRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to cancel request.");
     }
   }
 
@@ -225,8 +280,66 @@ function Dashboard() {
       <section style={{ marginBottom: "48px" }}>
         <h2 style={sectionHeading}>My Appointments</h2>
 
-        {myBookings.length > 0 ? (
+        {myRequests.length === 0 && myBookings.length === 0 ? (
+          emptyNote("You have no upcoming appointments.")
+        ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+
+            {/* Pending 1:1 meeting requests sent by this user (awaiting owner response) */}
+            {myRequests.map((req) => (
+              <Card key={`req-${req.id}`}>
+                <Card.Content>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between",
+                    alignItems: "flex-start", gap: "16px", flexWrap: "wrap",
+                  }}>
+                    <div>
+                      {/* Pending badge */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                        <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>
+                          Meeting Request — {req.owner.firstName} {req.owner.lastName}
+                        </p>
+                        <span style={{
+                          fontSize: "11px", fontWeight: 700, padding: "2px 9px",
+                          borderRadius: "999px", background: "#fff8e1", color: "#b78800",
+                          whiteSpace: "nowrap",
+                        }}>
+                          Pending
+                        </span>
+                      </div>
+                      <p style={{ color: "#555", fontSize: "14px", margin: "0 0 2px" }}>
+                        📅&nbsp;{fmtDate(req.requestedStart)}&nbsp;·&nbsp;
+                        {fmtTime(req.requestedStart)} – {fmtTime(req.requestedEnd)}
+                      </p>
+                      {req.message && (
+                        <p style={{ color: "#8e8e8e", fontSize: "13px", margin: "4px 0 0", fontStyle: "italic" }}>
+                          "{req.message}"
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px", flexShrink: 0, alignItems: "center" }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(`mailto:${req.owner.email}`)}
+                      >
+                        Email Owner
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleCancelRequest(req.id)}
+                      >
+                        Cancel Request
+                      </Button>
+                    </div>
+                  </div>
+                </Card.Content>
+              </Card>
+            ))}
+
+            {/* Confirmed bookings (office hours + accepted 1:1s) */}
             {myBookings.map((booking) => {
               const slot  = booking.bookingSlot;
               const owner = slot.owner;
@@ -276,9 +389,8 @@ function Dashboard() {
                 </Card>
               );
             })}
+
           </div>
-        ) : (
-          emptyNote("You have no upcoming appointments.")
         )}
       </section>
 
