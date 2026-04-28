@@ -114,6 +114,132 @@ export const apiCreateRecurringSlots = (payload: {
     body: JSON.stringify(payload),
   });
 
+// ## Additional backend entity shapes ##
+
+/** A single Booking row -> returned by POST /api/booking/getMyBookings. */
+export interface BackendBooking {
+  bookingID: number;
+  bookingSlot: BackendBookingSlot;
+  reservee: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    department: string;
+    title: string;
+    owner: boolean;
+  };
+  registeredAt: string; // "YYYY-MM-DD"
+}
+
+/** A Request entity -> returned by POST /api/requests/getAllPendingRequests. */
+export interface BackendRequest {
+  id: number;
+  requester: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    department: string;
+    title: string;
+  };
+  owner: {
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  requestedStart: string; // ISO local datetime "YYYY-MM-DDTHH:MM:SS"
+  requestedEnd: string;
+  message: string | null;
+  pending: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ## Dashboard API calls ##
+
+/**
+ * POST /api/booking/getMyBookings
+ * Returns the authenticated user's Booking objects (each includes the full BookingSlot
+ * + the bookingID needed for the unbook call).  Body = raw token.
+ */
+export const apiGetMyBookings = (token: string): Promise<BackendBooking[]> =>
+  tokenFetch("/api/booking/getMyBookings", token) as Promise<BackendBooking[]>;
+
+/**
+ * DELETE /api/booking/{bookingId}
+ * Cancels (unbooks) the given Booking for the authenticated user.  Body = raw token.
+ */
+export const apiUnbook = (bookingId: number, token: string) =>
+  apiFetch(`/api/booking/${bookingId}`, {
+    method: "DELETE",
+    body: token,
+    headers: { "Content-Type": "text/plain" },
+  });
+
+/**
+ * POST /api/booking/owner/getSlotBookingCounts
+ * Returns a Record<string, number> mapping bookingSlotID -> booking count for every
+ * slot owned by the authenticated owner.  Body = raw token.
+ * The backend emits Long keys, which Jackson serialises as JSON number keys (string keys when used as JS obj)
+ */
+export const apiGetSlotBookingCounts = (
+  token: string,
+): Promise<Record<string, number>> =>
+  tokenFetch("/api/booking/owner/getSlotBookingCounts", token) as Promise<
+    Record<string, number>
+  >;
+
+/**
+ * POST /api/booking/owner/getAllOwnedSlots
+ * Returns ALL BookingSlot records owned by the authenticated owner (all statuses).
+ * Body = raw token.
+ */
+export const apiGetOwnerOwnedSlots = (token: string): Promise<BackendBookingSlot[]> =>
+  tokenFetch("/api/booking/owner/getAllOwnedSlots", token) as Promise<
+    BackendBookingSlot[]
+  >;
+
+/**
+ * PATCH /api/booking/cancel/{bookingSlotId}
+ * Marks a slot as CANCELLED and deletes all its bookings. Body = raw token.
+ */
+export const apiCancelSlot = (slotId: number, token: string) =>
+  apiFetch(`/api/booking/cancel/${slotId}`, {
+    method: "PATCH",
+    body: token,
+    headers: { "Content-Type": "text/plain" },
+  });
+
+/**
+ * POST /api/requests/getAllPendingRequests
+ * Returns all PENDING Request objects for the authenticated owner. Body = raw token.
+ */
+export const apiGetPendingRequests = (token: string): Promise<BackendRequest[]> =>
+  tokenFetch("/api/requests/getAllPendingRequests", token) as Promise<
+    BackendRequest[]
+  >;
+
+/**
+ * POST /api/requests/{id}/accept
+ * Owner accepts a pending Request. Body = raw token.
+ */
+export const apiAcceptRequest = (requestId: number, token: string) =>
+  apiFetch(`/api/requests/${requestId}/accept`, {
+    method: "POST",
+    body: token,
+    headers: { "Content-Type": "text/plain" },
+  });
+
+/**
+ * POST /api/requests/{id}/decline
+ * Owner declines a pending Request (deletes it). Body = raw token.
+ */
+export const apiDeclineRequest = (requestId: number, token: string) =>
+  apiFetch(`/api/requests/${requestId}/decline`, {
+    method: "POST",
+    body: token,
+    headers: { "Content-Type": "text/plain" },
+  });
+
 /**
  * POST /api/account/listBooked
  * Returns the current user's booked items (BookingSlot entities + Request entities).

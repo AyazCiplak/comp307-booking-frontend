@@ -1,16 +1,27 @@
-import { useState } from "react";
+// Programmed by Ayaz Ciplak
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import BookingSlotCard from "../../components/calendar/BookingSlotCard";
 import {
-  myAppointments,
-  ownerSlots,
-  ownerMeetingSequences,
-  pendingRequests,
-} from "../../data/mockSlots"; // Temp mock data import
-import type { BookingSlot, PendingRequest, MeetingSequence } from "../../types/booking";
+  apiGetMyBookings,
+  apiUnbook,
+  apiGetOwnerOwnedSlots,
+  apiGetSlotBookingCounts,
+  apiCancelSlot,
+  apiGetPendingRequests,
+  apiAcceptRequest,
+  apiDeclineRequest,
+  mapBackendSlot,
+} from "../../api/booking";
+import type {
+  BackendBooking,
+  BackendRequest,
+  BackendBookingSlot,
+} from "../../api/booking";
+import type { BookingSlot } from "../../types/booking";
 
 // TODO: Make sure this grid is flexible for different media types (e.g. laptop vs tablet)
 const GRID: React.CSSProperties = {
@@ -23,101 +34,141 @@ const GRID: React.CSSProperties = {
  * Single dashboard for all logged-in users.
  *
  * Sections (in order):
- *  1. "My Appointments" -> all users: slots already booked (confirmed)
- *  ---> Can show ANY type of CONFIRMED meeting the current individual has booked  
- *  2. "Find a Slot" -> all users: call-to-action (button) to browse owners list
- *  3. "Pending Requests" -> OWNERS ONLY: incoming Type 1 requests to accept/decline
- *  4. "My Booking Slots" -> OWNERS ONLY: type 3 office-hour slots they created
- *  5. "My Meeting Sequences" -> OWNERS ONLY: Type 2 group sequences + copyable invite links (URLs)
- *
- * ALL DATA CURRENTLY MOCKED — will be replaced with real API calls once the "real" backend is connected.
+ *  1. "My Appointments" -> all users: confirmed office-hour bookings + accepted requests
+ *  2. "Find a Slot" -> all users: CTA to browse owners
+ *  3. "Pending Requests" -> OWNERS ONLY: incoming Type 1 requests to accept / decline
+ *  4. "My Booking Slots" -> OWNERS ONLY: office-hour slots they created (Type 3)
+ *  5. "My Pending Group Meetings" -> OWNERS ONLY: Type 2 placeholder (wired in next sprint)
  */
 function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Filter appointments to only those belonging to the currently logged-in user.
-  // (The real API will do this server-side; here we replicate that behaviour with mock data.)
-  const myBookings = myAppointments.filter(
-    (slot) => slot.bookedByUserEmail === user?.email,
-  );
+  const isOwner = user?.role === "owner";
 
-  // ## Local state for mock interactions ## 
-  const [requests, setRequests]       = useState<PendingRequest[]>(pendingRequests);
-  // ownerSlots is kept in state so accepted requests can push new personal meeting slots into it.
-  const [myOwnerSlots, setMyOwnerSlots] = useState<BookingSlot[]>(ownerSlots);
-  const [sequences]                   = useState<MeetingSequence[]>(ownerMeetingSequences);
-  const [copiedId, setCopiedId]       = useState<string | null>(null);
+  // ### DATA STATE ###
+  const [myBookings, setMyBookings] = useState<BackendBooking[]>([]);
+  const [ownerSlots, setOwnerSlots] = useState<BookingSlot[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<BackendRequest[]>([]);
 
-  // ## Stub handlers (replace with API calls when backend is ready) ## 
-  function handleCancel(slotId: string) {
-    console.log("Cancel booking:", slotId);
-    // TODO: DELETE /api/bookings/:slotId -> send mailto: to owner
+  // ### UI STATE ###
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // ### FETCH ON MOUNT ###
+  useEffect(() => {
+    if (!user?.token) return;
+
+    const fetchBookings = apiGetMyBookings(user.token);
+    const fetchSlots    = isOwner
+      ? apiGetOwnerOwnedSlots(user.token)
+      : Promise.resolve([] as BackendBookingSlot[]);
+    const fetchCounts   = isOwner
+      ? apiGetSlotBookingCounts(user.token)
+      : Promise.resolve({} as Record<string, number>);
+    const fetchRequests = isOwner
+      ? apiGetPendingRequests(user.token)
+      : Promise.resolve([] as BackendRequest[]);
+
+    Promise.all([fetchBookings, fetchSlots, fetchCounts, fetchRequests])
+      .then(([bookings, slots, counts, requests]) => {
+        setMyBookings(bookings);
+        // Merge booking counts into each mapped slot so BookingSlotCard can show "X registered"
+        setOwnerSlots(
+          (slots as BackendBookingSlot[]).map((s) => ({
+            ...mapBackendSlot(s),
+            registeredCount: (counts as Record<string, number>)[String(s.bookingSlotID)] ?? 0,
+          })),
+        );
+        setPendingRequests(requests);
+      })
+      .catch((err: unknown) => {
+        setLoadError(
+          err instanceof Error ? err.message : "Failed to load dashboard data.",
+        );
+      })
+      .finally(() => setIsLoading(false));
+  }, [user?.token, isOwner]);
+
+  // ### HANDLERS ###
+
+  async function handleUnbook(bookingId: string) {
+    if (!user?.token) return;
+    setActionError(null);
+    try {
+      await apiUnbook(Number(bookingId), user.token);
+      setMyBookings((prev) => prev.filter((b) => String(b.bookingID) !== bookingId));
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to cancel booking.");
+    }
   }
 
-  function handleDelete(slotId: string) {
-    // Remove from the owner's slot list immediately (optimistic update).
-    setMyOwnerSlots((prev) => prev.filter((s) => s.id !== slotId));
-    // TODO: DELETE /api/slots/:slotId -> send mailto: to booker if booked
-    console.log("Delete slot:", slotId);
+  async function handleCancelSlot(slotId: string) {
+    if (!user?.token) return;
+    setActionError(null);
+    try {
+      await apiCancelSlot(Number(slotId), user.token);
+      setOwnerSlots((prev) => prev.filter((s) => s.id !== slotId));
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to cancel slot.");
+    }
   }
 
-  function handleAcceptRequest(req: PendingRequest) {
-    // Remove the request from the pending list.
-    setRequests((prev) => prev.filter((r) => r.id !== req.id));
-
-    // Create a new confirmed personal meeting slot from the accepted request
-    // and push it into "My Booking Slots" immediately.
-    const newSlot: BookingSlot = {
-      id: `accepted-${req.id}`,
-      date: req.requestedDate,
-      startTime: req.requestedStartTime,
-      endTime: req.requestedEndTime,
-      ownerName: req.ownerName,
-      ownerEmail: req.ownerEmail,
-      status: "booked",
-      type: "meeting",
-      title: `Personal Meeting with ${req.requesterName}`,
-      bookedByUserName: req.requesterName,
-      bookedByUserEmail: req.requesterEmail,
-    };
-    setMyOwnerSlots((prev) => [newSlot, ...prev]);
-
-    // TODO: POST /api/requests/:id/accept -> creates BookingSlot + sends mailto: to requester
-    window.open(
-      `mailto:${req.requesterEmail}?subject=Meeting Request Accepted&body=Hi ${req.requesterName},%0A%0AYour meeting request for ${req.requestedDate.toLocaleDateString()} at ${req.requestedStartTime} has been accepted!%0A%0ABest,%0A${user?.name}`,
-    );
+  async function handleAcceptRequest(req: BackendRequest) {
+    if (!user?.token) return;
+    setActionError(null);
+    try {
+      await apiAcceptRequest(req.id, user.token);
+      setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+      // Notify requester via mailto:
+      const date = new Date(req.requestedStart).toLocaleDateString("en-CA", {
+        weekday: "short", month: "short", day: "numeric",
+      });
+      const time = new Date(req.requestedStart).toLocaleTimeString("en-US", {
+        hour: "numeric", minute: "2-digit", hour12: true,
+      });
+      window.open(
+        `mailto:${req.requester.email}?subject=Meeting Request Accepted&body=Hi ${req.requester.firstName},%0A%0AYour meeting request for ${date} at ${time} has been accepted!%0A%0ABest,%0A${user.name}`,
+      );
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to accept request.");
+    }
   }
 
-  function handleDeclineRequest(req: PendingRequest) {
-    setRequests((prev) => prev.filter((r) => r.id !== req.id));
-    // TODO: POST /api/requests/:id/decline -> sends mailto: to requester
-    window.open(
-      `mailto:${req.requesterEmail}?subject=Meeting Request Declined&body=Hi ${req.requesterName},%0A%0AUnfortunately your meeting request for ${req.requestedDate.toLocaleDateString()} at ${req.requestedStartTime} could not be accommodated at this time.%0A%0ABest,%0A${user?.name}`,
-    );
+  async function handleDeclineRequest(req: BackendRequest) {
+    if (!user?.token) return;
+    setActionError(null);
+    try {
+      await apiDeclineRequest(req.id, user.token);
+      setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+      // Notify requester via mailto:
+      window.open(
+        `mailto:${req.requester.email}?subject=Meeting Request&body=Hi ${req.requester.firstName},%0A%0AUnfortunately your meeting request could not be accommodated at this time.%0A%0ABest,%0A${user.name}`,
+      );
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to decline request.");
+    }
   }
 
-  function handleCopyLink(seq: MeetingSequence) {
-    navigator.clipboard.writeText(seq.inviteUrl).then(() => {
-      setCopiedId(seq.id);
-      setTimeout(() => setCopiedId(null), 2000);
+  // ### FORMAT HELPERS ###
+  function fmtDate(iso: string) {
+    return new Date(iso).toLocaleDateString("en-CA", {
+      weekday: "short", month: "short", day: "numeric", year: "numeric",
+    });
+  }
+  function fmtTime(iso: string) {
+    return new Date(iso).toLocaleTimeString("en-US", {
+      hour: "numeric", minute: "2-digit", hour12: true,
     });
   }
 
-  // ### HELPERS 
-  const sectionHeading: React.CSSProperties = {
-    fontSize: "20px",
-    marginBottom: "16px",
-    margin: "0 0 16px 0",
+  // ### STYLE HELPERS ###
+  const sectionHeading: React.CSSProperties = { fontSize: "20px", margin: "0 0 16px" };
+  const sectionRow: React.CSSProperties     = {
+    display: "flex", justifyContent: "space-between",
+    alignItems: "center", marginBottom: "16px",
   };
-
-  const sectionRow: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "16px",
-  };
-
   const emptyNote = (msg: string) => (
     <Card>
       <Card.Content>
@@ -126,7 +177,27 @@ function Dashboard() {
     </Card>
   );
 
-  // ### CONTENT ### 
+  // ### LOADING / ERROR SCREENS ###
+  if (isLoading) {
+    return (
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "40px 20px" }}>
+        <p style={{ color: "#8e8e8e", textAlign: "center", paddingTop: "60px" }}>
+          Loading dashboard…
+        </p>
+      </div>
+    );
+  }
+  if (loadError) {
+    return (
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "40px 20px" }}>
+        <div style={{ background: "#fbeaea", color: "#3a1f1f", borderRadius: "10px", padding: "16px 20px" }}>
+          {loadError}
+        </div>
+      </div>
+    );
+  }
+
+  // ### MAIN CONTENT ###
   return (
     <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "40px 20px" }}>
 
@@ -136,24 +207,75 @@ function Dashboard() {
           Welcome back, {user?.name}
         </h1>
         <p style={{ color: "#8e8e8e", fontSize: "15px" }}>
-          {user?.role === "owner" ? "Owner" : "Student"} · {user?.email}
+          {isOwner ? "Owner" : "Student"} · {user?.email}
         </p>
       </div>
+
+      {/* Action error banner */}
+      {actionError && (
+        <div style={{
+          background: "#fbeaea", color: "#3a1f1f", borderRadius: "10px",
+          padding: "14px 18px", fontSize: "0.95rem", marginBottom: "24px",
+        }}>
+          {actionError}
+        </div>
+      )}
 
       {/* Section 1: My Appointments (all users) */}
       <section style={{ marginBottom: "48px" }}>
         <h2 style={sectionHeading}>My Appointments</h2>
 
         {myBookings.length > 0 ? (
-          <div style={GRID}>
-            {myBookings.map((slot) => (
-              <BookingSlotCard
-                key={slot.id}
-                slot={slot}
-                onCancel={handleCancel}
-                onDelete={handleDelete}
-              />
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {myBookings.map((booking) => {
+              const slot  = booking.bookingSlot;
+              const owner = slot.owner;
+              return (
+                <Card key={booking.bookingID}>
+                  <Card.Content>
+                    <div style={{
+                      display: "flex", justifyContent: "space-between",
+                      alignItems: "flex-start", gap: "16px", flexWrap: "wrap",
+                    }}>
+                      <div>
+                        <p style={{ fontWeight: 600, fontSize: "15px", margin: "0 0 4px" }}>
+                          {slot.title || "Office Hours"}
+                        </p>
+                        <p style={{ color: "#555", fontSize: "14px", margin: "0 0 2px" }}>
+                          📅&nbsp;{fmtDate(slot.startDateTime)}&nbsp;·&nbsp;
+                          {fmtTime(slot.startDateTime)} – {fmtTime(slot.endDateTime)}
+                        </p>
+                        <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
+                          {owner.firstName} {owner.lastName}
+                          &nbsp;·&nbsp;{owner.title || owner.department || owner.email}
+                        </p>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "8px", flexShrink: 0, alignItems: "center" }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            window.open(
+                              `mailto:${owner.email}?subject=Regarding my booking: ${slot.title || "Office Hours"}`,
+                            )
+                          }
+                        >
+                          Email Owner
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleUnbook(String(booking.bookingID))}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </Card.Content>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           emptyNote("You have no upcoming appointments.")
@@ -166,12 +288,8 @@ function Dashboard() {
         <Card>
           <Card.Content>
             <div style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "24px",
-              flexWrap: "wrap",
-              padding: "8px 0",
+              display: "flex", justifyContent: "space-between",
+              alignItems: "center", gap: "24px", flexWrap: "wrap", padding: "8px 0",
             }}>
               <div>
                 <p style={{ fontWeight: 600, fontSize: "16px", marginBottom: "6px" }}>
@@ -189,25 +307,25 @@ function Dashboard() {
         </Card>
       </section>
 
-      {/* ### Owner-only sections ### */}
-      {user?.role === "owner" && (
+      {/* ## Owner-only sections ## */}
+      {isOwner && (
         <>
           {/* Section 3: Pending Requests (Type 1) */}
           <section style={{ marginBottom: "48px" }}>
             <h2 style={sectionHeading}>Pending Requests</h2>
 
-            {requests.length > 0 ? (
+            {pendingRequests.length > 0 ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {requests.map((req) => (
+                {pendingRequests.map((req) => (
                   <Card key={req.id}>
                     <Card.Header>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                         <div>
                           <p style={{ fontWeight: 600, fontSize: "16px", margin: "0 0 2px" }}>
-                            {req.requesterName}
+                            {req.requester.firstName} {req.requester.lastName}
                           </p>
                           <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
-                            {req.requesterEmail}
+                            {req.requester.email}
                           </p>
                         </div>
                         <span style={{
@@ -222,11 +340,8 @@ function Dashboard() {
 
                     <Card.Content>
                       <p style={{ fontSize: "15px", marginBottom: "6px" }}>
-                        📅&nbsp;
-                        {new Date(req.requestedDate).toLocaleDateString("en-CA", {
-                          weekday: "short", month: "short", day: "numeric",
-                        })}
-                        &nbsp;·&nbsp;{req.requestedStartTime} – {req.requestedEndTime}
+                        📅&nbsp;{fmtDate(req.requestedStart)}&nbsp;·&nbsp;
+                        {fmtTime(req.requestedStart)} – {fmtTime(req.requestedEnd)}
                       </p>
                       {req.message && (
                         <p style={{
@@ -242,24 +357,16 @@ function Dashboard() {
 
                     <Card.Footer>
                       <div style={{ display: "flex", gap: "8px" }}>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleAcceptRequest(req)}
-                        >
+                        <Button variant="primary" size="sm" onClick={() => handleAcceptRequest(req)}>
                           Accept
                         </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDeclineRequest(req)}
-                        >
+                        <Button variant="danger" size="sm" onClick={() => handleDeclineRequest(req)}>
                           Decline
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(`mailto:${req.requesterEmail}`)}
+                          onClick={() => window.open(`mailto:${req.requester.email}`)}
                         >
                           Email
                         </Button>
@@ -273,7 +380,7 @@ function Dashboard() {
             )}
           </section>
 
-          {/* Section 4: My Booking Slots (Type 1, Type 3) [TODO: Extend to also display confirmed type 2] */}
+          {/* Section 4: My Booking Slots (Type 3 office hours + any accepted Type 1 slots) */}
           <section style={{ marginBottom: "48px" }}>
             <div style={sectionRow}>
               <h2 style={{ fontSize: "20px", margin: 0 }}>My Booking Slots</h2>
@@ -286,18 +393,20 @@ function Dashboard() {
               </Button>
             </div>
 
-            {myOwnerSlots.length > 0 ? (
+            {ownerSlots.filter((s) => s.status !== "cancelled").length > 0 ? (
               <div style={GRID}>
-                {myOwnerSlots.map((slot) => (
-                  <BookingSlotCard key={slot.id} slot={slot} onDelete={handleDelete} />
-                ))}
+                {ownerSlots
+                  .filter((s) => s.status !== "cancelled")
+                  .map((slot) => (
+                    <BookingSlotCard key={slot.id} slot={slot} onDelete={handleCancelSlot} />
+                  ))}
               </div>
             ) : (
               emptyNote("You have not created any booking slots yet.")
             )}
           </section>
 
-          {/* Section 5: My Pending Group Meetings (Type 2 — not yet finalized) */}
+          {/* Section 5: My Pending Group Meetings (Type 2 — wired in next sprint) */}
           <section style={{ marginBottom: "48px" }}>
             <div style={sectionRow}>
               <h2 style={{ fontSize: "20px", margin: 0 }}>My Pending Group Meetings</h2>
@@ -309,85 +418,9 @@ function Dashboard() {
                 + Create Group Meeting
               </Button>
             </div>
-
-            {sequences.filter(seq => !seq.finalized).length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {sequences.filter(seq => !seq.finalized).map((seq) => {
-                  const respondedSlots = seq.slots.filter(
-                    (s) => (s.registeredUserIds?.length ?? 0) > 0,
-                  ).length;
-
-                  return (
-                    <Card key={seq.id}>
-                      <Card.Header>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <div>
-                            <p style={{ fontWeight: 600, fontSize: "16px", margin: "0 0 2px" }}>
-                              {seq.name}
-                            </p>
-                            <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
-                              Created&nbsp;
-                              {new Date(seq.createdAt).toLocaleDateString("en-CA", {
-                                month: "short", day: "numeric", year: "numeric",
-                              })}
-                            </p>
-                          </div>
-                          <span style={{
-                            fontSize: "12px", fontWeight: 600,
-                            padding: "3px 10px", borderRadius: "999px",
-                            background: "#e8f0f7", color: "#507da7",
-                          }}>
-                            {seq.slots.length} option{seq.slots.length !== 1 ? "s" : ""}
-                          </span>
-                        </div>
-                      </Card.Header>
-
-                      <Card.Content>
-                        <div style={{
-                          display: "flex", gap: "24px", fontSize: "14px", color: "#555",
-                          marginBottom: "12px",
-                        }}>
-                          <span>👥 Max {seq.userCeiling} per option</span>
-                          <span>📋 {respondedSlots}/{seq.slots.length} options with availability responses</span>
-                        </div>
-
-                        {/* Invite URL row */}
-                        <div style={{
-                          display: "flex", alignItems: "center", gap: "8px",
-                          background: "#f7f7f7", borderRadius: "8px",
-                          padding: "8px 12px",
-                        }}>
-                          <span style={{
-                            flex: 1, fontSize: "13px", color: "#507da7",
-                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                          }}>
-                            {seq.inviteUrl}
-                          </span>
-                          <Button
-                            variant={copiedId === seq.id ? "ghost" : "secondary"}
-                            size="sm"
-                            onClick={() => handleCopyLink(seq)}
-                          >
-                            {copiedId === seq.id ? "Copied!" : "Copy Link"}
-                          </Button>
-                        </div>
-                      </Card.Content>
-
-                      <Card.Footer>
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => navigate(`/owner/confirm-group/${seq.id}`)}
-                        >
-                          Review &amp; Confirm Time
-                        </Button>
-                      </Card.Footer>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              emptyNote("You have no pending group meetings.")
+            {emptyNote(
+              "Group meeting sequences will appear here once created. " +
+              'Use "Create Group Meeting" to set one up.',
             )}
           </section>
         </>
