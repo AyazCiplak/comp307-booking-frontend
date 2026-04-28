@@ -139,7 +139,7 @@ function GroupBooking() {
   if (isLoading) {
     return (
       <div style={{ maxWidth: "800px", margin: "0 auto", padding: "40px 20px", textAlign: "center" }}>
-        <p style={{ color: "#8e8e8e", paddingTop: "60px" }}>Loading invite…</p>
+        <p style={{ color: "#8e8e8e", paddingTop: "60px" }}>Loading invite...</p>
       </div>
     );
   }
@@ -157,6 +157,32 @@ function GroupBooking() {
               </p>
               <Button variant="primary" onClick={() => navigate("/dashboard")}>
                 Back to Dashboard
+              </Button>
+            </div>
+          </Card.Content>
+        </Card>
+      </div>
+    );
+  }
+
+  // ### FINALIZED SCREEN (invite URL is no longer active) ###
+  if (instance.finalized) {
+    return (
+      <div style={{ maxWidth: "800px", margin: "0 auto", padding: "40px 20px" }}>
+        <Card>
+          <Card.Content>
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <p style={{ fontSize: "40px", marginBottom: "12px" }}>🔒</p>
+              <h2 style={{ fontSize: "20px", marginBottom: "8px" }}>Meeting Already Confirmed</h2>
+              <p style={{ color: "#8e8e8e", fontSize: "15px", marginBottom: "8px" }}>
+                <strong>{instance.name}</strong> has been finalized by {instance.owner.firstName} {instance.owner.lastName}.
+              </p>
+              <p style={{ color: "#8e8e8e", fontSize: "14px", marginBottom: "24px" }}>
+                This invite link is no longer active. If you were marked as available, the
+                confirmed meeting should appear in your <strong>My Appointments</strong> on the dashboard.
+              </p>
+              <Button variant="primary" onClick={() => navigate("/dashboard")}>
+                Go to Dashboard
               </Button>
             </div>
           </Card.Content>
@@ -313,7 +339,7 @@ function GroupBooking() {
                           onClick={() => handleMarkAvailable(slot.bookingSlotID)}
                           disabled={isMarking}
                         >
-                          {isMarking ? "Saving…" : "Mark Available"}
+                          {isMarking ? "Saving..." : "Mark Available"}
                         </Button>
                       )}
                     </div>

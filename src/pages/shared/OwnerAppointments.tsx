@@ -151,7 +151,7 @@ function OwnerAppointments() {
           <Card>
             <Card.Content>
               <p style={{ color: "#8e8e8e", textAlign: "center", padding: "24px 0" }}>
-                Loading slots…
+                Loading slots...
               </p>
             </Card.Content>
           </Card>
