@@ -176,6 +176,19 @@ export const apiUnbook = (bookingId: number, token: string) =>
   });
 
 /**
+ * POST /api/booking/owner/getSlotBookingCounts
+ * Returns a Record<string, number> mapping bookingSlotID -> booking count for every
+ * slot owned by the authenticated owner.  Body = raw token.
+ * The backend emits Long keys, which Jackson serialises as JSON number keys (string keys when used as JS obj)
+ */
+export const apiGetSlotBookingCounts = (
+  token: string,
+): Promise<Record<string, number>> =>
+  tokenFetch("/api/booking/owner/getSlotBookingCounts", token) as Promise<
+    Record<string, number>
+  >;
+
+/**
  * POST /api/booking/owner/getAllOwnedSlots
  * Returns ALL BookingSlot records owned by the authenticated owner (all statuses).
  * Body = raw token.

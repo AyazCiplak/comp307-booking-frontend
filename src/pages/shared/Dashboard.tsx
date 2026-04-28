@@ -9,6 +9,7 @@ import {
   apiGetMyBookings,
   apiUnbook,
   apiGetOwnerOwnedSlots,
+  apiGetSlotBookingCounts,
   apiCancelSlot,
   apiGetPendingRequests,
   apiAcceptRequest,
@@ -60,17 +61,26 @@ function Dashboard() {
     if (!user?.token) return;
 
     const fetchBookings = apiGetMyBookings(user.token);
-    const fetchSlots = isOwner
+    const fetchSlots    = isOwner
       ? apiGetOwnerOwnedSlots(user.token)
       : Promise.resolve([] as BackendBookingSlot[]);
-    const fetchRequests  = isOwner
+    const fetchCounts   = isOwner
+      ? apiGetSlotBookingCounts(user.token)
+      : Promise.resolve({} as Record<string, number>);
+    const fetchRequests = isOwner
       ? apiGetPendingRequests(user.token)
       : Promise.resolve([] as BackendRequest[]);
 
-    Promise.all([fetchBookings, fetchSlots, fetchRequests])
-      .then(([bookings, slots, requests]) => {
+    Promise.all([fetchBookings, fetchSlots, fetchCounts, fetchRequests])
+      .then(([bookings, slots, counts, requests]) => {
         setMyBookings(bookings);
-        setOwnerSlots((slots).map(mapBackendSlot));
+        // Merge booking counts into each mapped slot so BookingSlotCard can show "X registered"
+        setOwnerSlots(
+          (slots as BackendBookingSlot[]).map((s) => ({
+            ...mapBackendSlot(s),
+            registeredCount: (counts as Record<string, number>)[String(s.bookingSlotID)] ?? 0,
+          })),
+        );
         setPendingRequests(requests);
       })
       .catch((err: unknown) => {
