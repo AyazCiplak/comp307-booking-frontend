@@ -51,6 +51,7 @@ function GroupBooking() {
   useEffect(() => {
     if (!inviteToken) return;
 
+    // redirect user to login if not authenticated, programmed by Rhea Talwar
     if (!user?.token) {
       sessionStorage.setItem("postLoginRedirect", `/invite/${inviteToken}`);
       navigate(
