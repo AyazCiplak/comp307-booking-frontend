@@ -332,7 +332,7 @@ function ConfirmGroupTime() {
                     variant="primary"
                     size="sm"
                     onClick={() => handlePickTime(slot)}
-                    disabled={isConfirming || available.length === 0}
+                    disabled={isConfirming}
                   >
                     {isConfirming ? "Confirming..." : "Pick This Time"}
                   </Button>
