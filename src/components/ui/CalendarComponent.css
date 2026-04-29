@@ -2,15 +2,22 @@
 
 /* Container */
 .calendar-wrapper {
+  --calendar-base-scale: 1;
+  --calendar-scale: var(--calendar-base-scale);
   display: inline-block;
   background-color: white;
-  padding: 24px 24px 24px 24px;
+  padding: calc(24px * var(--calendar-scale));
+}
+
+.calendar-wrapper,
+.custom-calendar {
+  max-width: 100%;
 }
 
 /* Base Calendar reset */
 .custom-calendar {
   width: 100%;
-  max-width: 480px; /* 120 * 4px */
+  max-width: calc(480px * var(--calendar-scale)); /* 120 * 4px */
   border: none !important;
   background-color: transparent;
   font-family: sans-serif;
@@ -33,50 +40,50 @@
 
 /* Navigation Header */
 .react-calendar__navigation {
-  margin-bottom: 16px;
-  height: 56px;
+  margin-bottom: calc(16px * var(--calendar-scale));
+  height: calc(56px * var(--calendar-scale));
   display: flex;
   align-items: center;
 }
 
 .react-calendar__navigation button {
-  font-size: 42px;
+  font-size: calc(42px * var(--calendar-scale));
   font-weight: bold;
   color: black;
-  min-width: 40px;
+  min-width: calc(40px * var(--calendar-scale));
 }
 
 .react-calendar__navigation__label span {
-  font-size: 40px;
+  font-size: calc(40px * var(--calendar-scale));
   font-weight: 800;
-  letter-spacing: 2px;
+  letter-spacing: calc(2px * var(--calendar-scale));
   color: black;
 }
 
 /* Weekday Headers */
 .react-calendar__month-view__weekdays {
-  margin-bottom: 10px;
+  margin-bottom: calc(10px * var(--calendar-scale));
   text-transform: uppercase;
 }
 
 .react-calendar__month-view__weekdays__weekday {
-  padding: 4px;
+  padding: calc(4px * var(--calendar-scale));
   text-align: center;
 }
 
 .react-calendar__month-view__weekdays__weekday abbr {
   text-decoration: none;
-  font-size: 38px;
+  font-size: calc(38px * var(--calendar-scale));
   font-weight: bold;
   color: black;
 }
 
 /* day tiles */
 .day-tile {
-  height: 68px;
-  border-radius: 16px;
-  font-size: 30px;
-  line-height: 68px;
+  height: calc(68px * var(--calendar-scale));
+  border-radius: calc(16px * var(--calendar-scale));
+  font-size: calc(30px * var(--calendar-scale));
+  line-height: calc(68px * var(--calendar-scale));
   text-align: center;
   justify-content: center;
   color: #8b8b8b;
@@ -100,9 +107,9 @@
 
 /* Month tiles */
 .month-tile {
-  height: 60px;
-  border-radius: 12px;
-  font-size: 22px;
+  height: calc(60px * var(--calendar-scale));
+  border-radius: calc(12px * var(--calendar-scale));
+  font-size: calc(22px * var(--calendar-scale));
   font-weight: 600;
   color: #8b8b8b;
   background-color: #f5f5f5;
@@ -125,10 +132,10 @@
 
 /* year view  */
 .react-calendar__tile__react-calendar__year-view__months__month {
-  height: 80px;
-  border-radius: 22px;
-  font-size: 40px;
-  line-height: 80px;
+  height: calc(80px * var(--calendar-scale));
+  border-radius: calc(22px * var(--calendar-scale));
+  font-size: calc(40px * var(--calendar-scale));
+  line-height: calc(80px * var(--calendar-scale));
   text-align: center;
   justify-content: center;
   color: black;
@@ -137,9 +144,9 @@
 
 /* year tile  */
 .year-tile {
-  height: 60px;
-  border-radius: 12px;
-  font-size: 22px;
+  height: calc(60px * var(--calendar-scale));
+  border-radius: calc(12px * var(--calendar-scale));
+  font-size: calc(22px * var(--calendar-scale));
   font-weight: 600;
   color: #8b8b8b;
   background-color: #f5f5f5;
@@ -161,10 +168,10 @@
 }
 
 .react-calendar__tile__react-decade-view__years__year {
-  height: 80px;
-  border-radius: 16px;
-  font-size: 42px;
-  line-height: 80px;
+  height: calc(80px * var(--calendar-scale));
+  border-radius: calc(16px * var(--calendar-scale));
+  font-size: calc(42px * var(--calendar-scale));
+  line-height: calc(80px * var(--calendar-scale));
   text-align: center;
   justify-content: center;
   color: black;

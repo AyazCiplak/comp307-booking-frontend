@@ -1,6 +1,6 @@
 // Programmed by Rhea Talwar
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import Calendar, { type CalendarProps } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "./CalendarComponent.css";
@@ -23,6 +23,8 @@ interface CalendarComponentProps {
   availableDays?: Set<number>;
   // Initial selected date — defaults to today.
   defaultDate?: Date;
+  // Uniform scale applied to the whole calendar (1 = original size).
+  scale?: number;
 }
 
 function CalendarComponent({
@@ -30,9 +32,14 @@ function CalendarComponent({
   minDate,
   availableDays = new Set(),
   defaultDate,
+  scale = 1,
 }: CalendarComponentProps) {
   const today = new Date();
   const initial = defaultDate ?? today;
+  const normalizedScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  const wrapperStyle: CSSProperties = {
+    ["--calendar-base-scale" as string]: String(normalizedScale),
+  };
 
   const [selectedDate, setSelectedDate] = useState<Date>(initial);
 
@@ -72,7 +79,7 @@ function CalendarComponent({
   };
 
   return (
-    <div className="calendar-wrapper">
+    <div className="calendar-wrapper" style={wrapperStyle}>
       <Calendar
         value={selectedDate}
         defaultActiveStartDate={
