@@ -202,6 +202,20 @@ export const apiGetOwnerOwnedSlots = (token: string): Promise<BackendBookingSlot
   >;
 
 /**
+ * POST /api/booking/owner/getAllOfficeHourSlotBookings
+ * Returns a Record<string, BackendBooking[]> mapping bookingSlotID -> all Bookings for
+ * every OFFICE_HOURS slot owned by the authenticated owner.
+ * Used by the dashboard registrant-list modal and the cancellation mailto.
+ * Body = raw token.
+ */
+export const apiGetAllOfficeHourSlotBookings = (
+  token: string,
+): Promise<Record<string, BackendBooking[]>> =>
+  tokenFetch("/api/booking/owner/getAllOfficeHourSlotBookings", token) as Promise<
+    Record<string, BackendBooking[]>
+  >;
+
+/**
  * PATCH /api/booking/cancel/{bookingSlotId}
  * Marks a slot as CANCELLED and deletes all its bookings. Body = raw token.
  */

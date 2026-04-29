@@ -9,6 +9,8 @@ interface BookingSlotCardProps {
   onBook?: (slotId: string) => void;
   onCancel?: (slotId: string) => void;
   onDelete?: (slotId: string) => void;
+  /** Owner only — called when the "X registered" badge is clicked on an office-hour slot. */
+  onViewRegistrants?: (slotId: string) => void;
 }
 
 // Colour-coded badge for the slot status
@@ -26,7 +28,7 @@ const TYPE_LABEL: Record<BookingSlot["type"], string> = {
   "group": "Group",
 };
 
-function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardProps) {
+function BookingSlotCard({ slot, onBook, onCancel, onDelete, onViewRegistrants }: BookingSlotCardProps) {
   const { user } = useAuth();
   const status = STATUS_STYLES[slot.status];
 
@@ -120,11 +122,20 @@ function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardPr
               Email Booker
             </Button>
           )}
-          {/* Office hours (Type 3): show registered count instead of Email Booker */}
+          {/* Office hours (Type 3): clickable registered-count badge */}
           {isOwner && slot.type === "office-hour" && (
-            <span style={{ fontSize: "13px", color: "#507da7", alignSelf: "center", fontWeight: 600 }}>
+            <button
+              onClick={() => onViewRegistrants?.(slot.id)}
+              title="View registered users"
+              style={{
+                background: "none", border: "none", cursor: onViewRegistrants ? "pointer" : "default",
+                fontSize: "13px", color: "#507da7", fontWeight: 600, padding: 0,
+                alignSelf: "center", fontFamily: "inherit",
+                textDecoration: onViewRegistrants ? "underline dotted" : "none",
+              }}
+            >
               👥 {slot.registeredCount ?? 0} registered
-            </span>
+            </button>
           )}
           {isOwner && (
             <Button variant="danger" size="sm" onClick={() => onDelete?.(slot.id)}>
