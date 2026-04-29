@@ -544,7 +544,7 @@ function Dashboard() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => navigate("/owner/create-slot")}
+                onClick={() => navigate("/owner/create-slot", { state: { kind: "group" } })}
               >
                 + Create Group Meeting
               </Button>
