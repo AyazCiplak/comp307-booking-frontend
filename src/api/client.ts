@@ -1,6 +1,5 @@
 // Programmed by Ayaz Ciplak
-const BASE_URL =
-  "https://railway.com/project/ec71e01a-f840-4a96-b767-ad3827edf4c6?"; // locally-running backend
+const BASE_URL = "https://comp307-booking-backend-production.up.railway.app"; // locally-running backend
 
 /**
  * Thin fetch wrapper used by all API modules.
