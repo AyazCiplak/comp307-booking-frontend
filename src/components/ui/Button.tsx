@@ -1,3 +1,4 @@
+// Programmed by Ayaz Ciplak
 interface ButtonProps {
   children: React.ReactNode;
   type?: "button" | "submit" | "reset";
