@@ -19,8 +19,7 @@ export type UserRole = "user" | "owner";
 export type SlotType = "office-hour" | "meeting" | "group";
 
 /** Maps to the backend BookingSlotStatus enum values. */
-export type SlotStatus = "available" | "booked" | "cancelled";
-
+export type SlotStatus = "available" | "booked" | "cancelled" | "pending";
 /**
  * A single bookable time slot, used across the dashboard, browse pages, and group booking page.
  * Produced by mapBackendSlot() in src/api/booking.ts from the raw backend entity.
