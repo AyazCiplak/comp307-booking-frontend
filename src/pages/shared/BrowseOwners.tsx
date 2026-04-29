@@ -135,22 +135,40 @@ function BrowseOwners() {
                   className="cursor-pointer hover:shadow-md transition-shadow"
                 >
                   <Card.Header>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div>
-                        <p style={{ fontWeight: 600, fontSize: "16px", margin: "0 0 2px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <p style={{ 
+                          fontWeight: 600, 
+                          fontSize: "16px", 
+                          margin: "0 0 2px",
+                          whiteSpace: "nowrap", 
+                          overflow: "hidden", 
+                          textOverflow: "ellipsis" 
+                        }}>
                           {fullName}
                         </p>
-                        <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
+                        <p style={{ 
+                          color: "#8e8e8e", 
+                          fontSize: "13px", 
+                          margin: 0,
+                          whiteSpace: "nowrap", 
+                          overflow: "hidden", 
+                          textOverflow: "ellipsis" 
+                        }}>
                           {owner.email}
                         </p>
                       </div>
                       {/* Title badge */}
                       {owner.title && (
                         <span style={{
-                          fontSize: "12px", fontWeight: 600,
-                          padding: "3px 10px", borderRadius: "999px",
-                          background: "#e8f0f7", color: "#507da7",
+                          fontSize: "12px", 
+                          fontWeight: 600,
+                          padding: "3px 10px", 
+                          borderRadius: "999px",
+                          background: "#e8f0f7", 
+                          color: "#507da7",
                           whiteSpace: "nowrap",
+                          flexShrink: 0 
                         }}>
                           {owner.title}
                         </span>
