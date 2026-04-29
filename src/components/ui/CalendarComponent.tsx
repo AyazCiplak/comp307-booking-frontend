@@ -1,6 +1,6 @@
 // Programmed by Rhea Talwar
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import Calendar, { type CalendarProps } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "./CalendarComponent.css";
@@ -23,6 +23,8 @@ interface CalendarComponentProps {
   availableDays?: Set<number>;
   // Initial selected date — defaults to today.
   defaultDate?: Date;
+  // Uniform scale applied to the whole calendar (1 = original size).
+  scale?: number;
 }
 
 function CalendarComponent({
@@ -30,41 +32,60 @@ function CalendarComponent({
   minDate,
   availableDays = new Set(),
   defaultDate,
+  scale = 1,
 }: CalendarComponentProps) {
   const today = new Date();
   const initial = defaultDate ?? today;
+  const normalizedScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  const wrapperStyle: CSSProperties = {
+    ["--calendar-base-scale" as string]: String(normalizedScale),
+  };
 
   const [selectedDate, setSelectedDate] = useState<Date>(initial);
 
   const tileClassName: CalendarProps["tileClassName"] = ({ date, view }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     if (view === "month") {
+      const isSelected = isSameDay(date, selectedDate);
+      const isPast = date < today; //check if date is in the past
       const isAvailable =
         date.getFullYear() === selectedDate.getFullYear() &&
         date.getMonth() === selectedDate.getMonth() &&
         availableDays.has(date.getDate());
 
       let classes = "day-tile";
-      if (isSameDay(date, selectedDate)) {
-        classes += " is-selected";
-      } else if (isAvailable) {
-        classes += " is-available";
-      }
+      if (isSelected) classes += " is-selected";
+      else if (isPast) classes += " is-past";
+      else if (isAvailable) classes += " is-available";
       return classes;
     }
 
     if (view === "year") {
-      const isCurrentMonth =
+      const isSelected =
         date.getFullYear() === selectedDate.getFullYear() &&
         date.getMonth() === selectedDate.getMonth();
+
+      //check if month is in past
+      const isPast =
+        date.getFullYear() < today.getFullYear() ||
+        (date.getFullYear() === today.getFullYear() &&
+          date.getMonth() < today.getMonth());
+
       let classes = "month-tile";
-      if (isCurrentMonth) classes += " is-selected";
+      if (isSelected) classes += " is-selected";
+      else if (isPast) classes += " is-past";
       return classes;
     }
 
     if (view === "decade") {
-      const isCurrentYear = date.getFullYear() === selectedDate.getFullYear();
+      const isSelected = date.getFullYear() === selectedDate.getFullYear();
+      const isPast = date.getFullYear() < today.getFullYear();
+
       let classes = "year-tile";
-      if (isCurrentYear) classes += " is-selected";
+      if (isSelected) classes += " is-selected";
+      else if (isPast) classes += " is-past";
       return classes;
     }
 
@@ -72,7 +93,7 @@ function CalendarComponent({
   };
 
   return (
-    <div className="calendar-wrapper">
+    <div className="calendar-wrapper" style={wrapperStyle}>
       <Calendar
         value={selectedDate}
         defaultActiveStartDate={

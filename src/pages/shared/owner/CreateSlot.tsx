@@ -1,5 +1,5 @@
 // Programmed by Ayaz Ciplak
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import CalendarComponent from "../../../components/ui/CalendarComponent.tsx";
 import Button from "../../../components/ui/Button.tsx";
@@ -49,7 +49,10 @@ function getNextWeekday(from: Date, targetDay: number): Date {
 
 function fmtDate(date: Date): string {
   return date.toLocaleDateString("en-CA", {
-    weekday: "short", month: "short", day: "numeric", year: "numeric",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
@@ -59,6 +62,31 @@ function sameDay(a: Date, b: Date): boolean {
     a.getMonth() === b.getMonth() &&
     a.getDate() === b.getDate()
   );
+}
+
+
+//calendar supports mobile scaling
+function getCalendarScale(width: number): number {
+  if (width <= 640) return 0.6;
+  return 1;
+}
+
+function useCalendarScale() {
+  const [scale, setScale] = useState(() =>
+    typeof window === "undefined" ? 1 : getCalendarScale(window.innerWidth),
+  );
+
+  useEffect(() => {
+    function handleResize() {
+      setScale(getCalendarScale(window.innerWidth));
+    }
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return scale;
 }
 
 /**
@@ -83,9 +111,14 @@ function CreateSlot() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const calendarScale = useCalendarScale();
 
   // today at midnight — used as minDate for all date pickers
-  const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+  const today = (() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })();
 
   // Pre-select the tab if navigated from a specific CTA (e.g. Dashboard's "Create Group Meeting")
   const initialKind: SlotKind =
@@ -107,7 +140,7 @@ function CreateSlot() {
   const [dayPattern, setDayPattern] = useState<Record<number, DaySchedule>>({});
   const [officeTitle, setOfficeTitle] = useState("");
   const [startDateStr, setStartDateStr] = useState(
-    () => today.toISOString().split("T")[0],  // YYYY-MM-DD default = today
+    () => today.toISOString().split("T")[0], // YYYY-MM-DD default = today
   );
   const [numWeeks, setNumWeeks] = useState("4");
 
@@ -130,7 +163,9 @@ function CreateSlot() {
     }
     // Reject duplicates and overlapping slots on the same day.
     const conflict = slotList.find(
-      (s) => sameDay(s.date, pickDate) && timesOverlap(s.startTime, s.endTime, pickStart, pickEnd),
+      (s) =>
+        sameDay(s.date, pickDate) &&
+        timesOverlap(s.startTime, s.endTime, pickStart, pickEnd),
     );
     if (conflict) {
       setError(
@@ -141,7 +176,12 @@ function CreateSlot() {
     setError("");
     setSlotList((prev) => [
       ...prev,
-      { id: `${Date.now()}-${Math.random()}`, date: new Date(pickDate), startTime: pickStart, endTime: pickEnd },
+      {
+        id: `${Date.now()}-${Math.random()}`,
+        date: new Date(pickDate),
+        startTime: pickStart,
+        endTime: pickEnd,
+      },
     ]);
   }
 
@@ -153,8 +193,11 @@ function CreateSlot() {
   function toggleDay(val: number) {
     setDayPattern((prev) => {
       const next = { ...prev };
-      if (val in next) { delete next[val]; }
-      else             { next[val] = { start: "09:00", end: "10:00" }; }
+      if (val in next) {
+        delete next[val];
+      } else {
+        next[val] = { start: "09:00", end: "10:00" };
+      }
       return next;
     });
   }
@@ -164,7 +207,7 @@ function CreateSlot() {
       ...prev,
       [val]: {
         start: field === "start" ? time : prev[val].start,
-        end:   field === "end"   ? time : prev[val].end,
+        end: field === "end" ? time : prev[val].end,
       },
     }));
   }
@@ -173,13 +216,19 @@ function CreateSlot() {
   const weeksNum = parseInt(numWeeks) || 0;
   const totalSlots3 = selectedDayCount * weeksNum;
 
-  // Submission handling 
+  // Submission handling
   async function handleCreate() {
     setError("");
 
     if (slotKind === "group") {
-      if (slotList.length === 0) { setError("Add at least one time slot to the list."); return; }
-      if (!seqName.trim())       { setError("Please name your meeting sequence."); return; }
+      if (slotList.length === 0) {
+        setError("Add at least one time slot to the list.");
+        return;
+      }
+      if (!seqName.trim()) {
+        setError("Please name your meeting sequence.");
+        return;
+      }
       if (Number(userCeiling) < 1 || isNaN(Number(userCeiling))) {
         setError("Max users must be a positive number.");
         return;
@@ -213,10 +262,16 @@ function CreateSlot() {
         }
 
         // 3. Show success screen with the invite URL
-        setCreatedUrl(`${window.location.origin}/invite/${instance.inviteToken}`);
+        setCreatedUrl(
+          `${window.location.origin}/invite/${instance.inviteToken}`,
+        );
         setCreatedName(seqName.trim());
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to create group meeting. Please try again.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to create group meeting. Please try again.",
+        );
       } finally {
         setSubmitting(false);
       }
@@ -224,14 +279,29 @@ function CreateSlot() {
     }
 
     // Type 3 validation
-    if (selectedDayCount === 0) { setError("Select at least one day of the week."); return; }
+    if (selectedDayCount === 0) {
+      setError("Select at least one day of the week.");
+      return;
+    }
     for (const key of Object.keys(dayPattern)) {
       const { start, end } = dayPattern[Number(key)];
-      if (!start || !end) { setError("Set start and end times for all selected days."); return; }
-      if (start >= end) { setError("End time must be after start time for every day."); return; }
+      if (!start || !end) {
+        setError("Set start and end times for all selected days.");
+        return;
+      }
+      if (start >= end) {
+        setError("End time must be after start time for every day.");
+        return;
+      }
     }
-    if (!startDateStr) { setError("Select a starting date."); return; }
-    if (weeksNum < 1) { setError("Number of weeks must be at least 1."); return; }
+    if (!startDateStr) {
+      setError("Select a starting date.");
+      return;
+    }
+    if (weeksNum < 1) {
+      setError("Number of weeks must be at least 1.");
+      return;
+    }
 
     // Build the FIRST occurrence of each selected weekday at/after the start date.
     // The backend takes this first-week list + weeksToRepeat and generates all
@@ -253,7 +323,9 @@ function CreateSlot() {
     }
 
     if (startDateTimes.length === 0) {
-      setError("No valid slot dates could be generated. Check your start date and selected days.");
+      setError(
+        "No valid slot dates could be generated. Check your start date and selected days.",
+      );
       return;
     }
 
@@ -268,7 +340,11 @@ function CreateSlot() {
       });
       navigate("/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create slots. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to create slots. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -282,27 +358,58 @@ function CreateSlot() {
     });
   }
 
-  // ### SUCCESS SCREEN (upon URL creation) - Type 2 only ### 
+  // ### SUCCESS SCREEN (upon URL creation) - Type 2 only ###
   if (createdUrl && createdName) {
     return (
-      <div style={{ maxWidth: "640px", margin: "0 auto", padding: "40px 20px" }}>
+      <div
+        style={{ maxWidth: "640px", margin: "0 auto", padding: "40px 20px" }}
+      >
         <Card>
           <Card.Content>
             <div style={{ textAlign: "center", padding: "32px 0 24px" }}>
               <p style={{ fontSize: "40px", marginBottom: "12px" }}>🎉</p>
-              <h2 style={{ fontSize: "22px", margin: "0 0 8px" }}>Sequence Created!</h2>
-              <p style={{ color: "#8e8e8e", fontSize: "15px", marginBottom: "28px" }}>
-                <strong>{createdName}</strong> is ready. Share the invite link with participants.
+              <h2 style={{ fontSize: "22px", margin: "0 0 8px" }}>
+                Sequence Created!
+              </h2>
+              <p
+                style={{
+                  color: "#8e8e8e",
+                  fontSize: "15px",
+                  marginBottom: "28px",
+                }}
+              >
+                <strong>{createdName}</strong> is ready. Share the invite link
+                with participants.
               </p>
-              <div style={{
-                display: "flex", alignItems: "center", gap: "10px",
-                background: "#f7f7f7", borderRadius: "10px",
-                padding: "10px 14px", marginBottom: "28px", textAlign: "left",
-              }}>
-                <span style={{ flex: 1, fontSize: "13px", color: "#507da7", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  background: "#f7f7f7",
+                  borderRadius: "10px",
+                  padding: "10px 14px",
+                  marginBottom: "28px",
+                  textAlign: "left",
+                }}
+              >
+                <span
+                  style={{
+                    flex: 1,
+                    fontSize: "13px",
+                    color: "#507da7",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {createdUrl}
                 </span>
-                <Button variant={copiedUrl ? "ghost" : "secondary"} size="sm" onClick={handleCopyUrl}>
+                <Button
+                  variant={copiedUrl ? "ghost" : "secondary"}
+                  size="sm"
+                  onClick={handleCopyUrl}
+                >
                   {copiedUrl ? "Copied!" : "Copy Link"}
                 </Button>
               </div>
@@ -316,19 +423,31 @@ function CreateSlot() {
     );
   }
 
-  // ### MAIN FORM ### 
+  // ### MAIN FORM ###
   return (
     <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "40px 20px" }}>
-
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "32px",
+        }}
+      >
         <div>
-          <h1 style={{ fontSize: "28px", margin: "0 0 4px" }}>Create a New Slot</h1>
+          <h1 style={{ fontSize: "28px", margin: "0 0 4px" }}>
+            Create a New Slot
+          </h1>
           <p style={{ color: "#8e8e8e", fontSize: "15px", margin: 0 }}>
             Choose a type, schedule your times, then create.
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/dashboard")}
+        >
           ← Back to Dashboard
         </Button>
       </div>
@@ -336,56 +455,108 @@ function CreateSlot() {
       {/* Type picker */}
       <Card className="mb-6">
         <Card.Content>
-          <p style={{ fontWeight: 600, fontSize: "15px", marginBottom: "14px" }}>Slot Type</p>
+          <p
+            style={{ fontWeight: 600, fontSize: "15px", marginBottom: "14px" }}
+          >
+            Slot Type
+          </p>
           <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-
-            <label style={{
-              flex: 1, minWidth: "220px",
-              display: "flex", alignItems: "flex-start", gap: "12px",
-              border: `2px solid ${slotKind === "office-hour" ? "#507da7" : "#e0e0e0"}`,
-              borderRadius: "12px", padding: "14px 16px", cursor: "pointer",
-              background: slotKind === "office-hour" ? "#f0f5fb" : "transparent",
-              transition: "all 0.15s",
-            }}>
-              <input type="radio" name="slotKind" value="office-hour"
+            <label
+              style={{
+                flex: 1,
+                minWidth: "220px",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "12px",
+                border: `2px solid ${slotKind === "office-hour" ? "#507da7" : "#e0e0e0"}`,
+                borderRadius: "12px",
+                padding: "14px 16px",
+                cursor: "pointer",
+                background:
+                  slotKind === "office-hour" ? "#f0f5fb" : "transparent",
+                transition: "all 0.15s",
+              }}
+            >
+              <input
+                type="radio"
+                name="slotKind"
+                value="office-hour"
                 checked={slotKind === "office-hour"}
                 onChange={() => setSlotKind("office-hour")}
-                className="accent-steel-blue mt-0.5" />
+                className="accent-steel-blue mt-0.5"
+              />
               <div>
-                <p style={{ fontWeight: 600, margin: "0 0 2px", fontSize: "15px" }}>Office Hours (Recurring)</p>
+                <p
+                  style={{
+                    fontWeight: 600,
+                    margin: "0 0 2px",
+                    fontSize: "15px",
+                  }}
+                >
+                  Office Hours (Recurring)
+                </p>
                 <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
-                  Choose days of the week and a number of recurring weeks. Bookable by any user.
+                  Choose days of the week and a number of recurring weeks.
+                  Bookable by any user.
                 </p>
               </div>
             </label>
 
-            <label style={{
-              flex: 1, minWidth: "220px",
-              display: "flex", alignItems: "flex-start", gap: "12px",
-              border: `2px solid ${slotKind === "group" ? "#629dfc" : "#e0e0e0"}`,
-              borderRadius: "12px", padding: "14px 16px", cursor: "pointer",
-              background: slotKind === "group" ? "#f0f5ff" : "transparent",
-              transition: "all 0.15s",
-            }}>
-              <input type="radio" name="slotKind" value="group"
+            <label
+              style={{
+                flex: 1,
+                minWidth: "220px",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "12px",
+                border: `2px solid ${slotKind === "group" ? "#629dfc" : "#e0e0e0"}`,
+                borderRadius: "12px",
+                padding: "14px 16px",
+                cursor: "pointer",
+                background: slotKind === "group" ? "#f0f5ff" : "transparent",
+                transition: "all 0.15s",
+              }}
+            >
+              <input
+                type="radio"
+                name="slotKind"
+                value="group"
                 checked={slotKind === "group"}
                 onChange={() => setSlotKind("group")}
-                className="accent-light-blue mt-0.5" />
+                className="accent-light-blue mt-0.5"
+              />
               <div>
-                <p style={{ fontWeight: 600, margin: "0 0 2px", fontSize: "15px" }}>Group Meeting</p>
+                <p
+                  style={{
+                    fontWeight: 600,
+                    margin: "0 0 2px",
+                    fontSize: "15px",
+                  }}
+                >
+                  Group Meeting
+                </p>
                 <p style={{ color: "#8e8e8e", fontSize: "13px", margin: 0 }}>
-                  Propose slot options, let invited users mark their availability (when2meet style), then confirm the best time.
+                  Propose slot options, let invited users mark their
+                  availability (when2meet style), then confirm the best time.
                 </p>
               </div>
             </label>
-
           </div>
         </Card.Content>
       </Card>
 
       {/* Error banner */}
       {error && (
-        <div style={{ background: "#fbeaea", color: "#3a1f1f", borderRadius: "10px", padding: "14px 18px", fontSize: "0.95rem", marginBottom: "20px" }}>
+        <div
+          style={{
+            background: "#fbeaea",
+            color: "#3a1f1f",
+            borderRadius: "10px",
+            padding: "14px 18px",
+            fontSize: "0.95rem",
+            marginBottom: "20px",
+          }}
+        >
           {error}
         </div>
       )}
@@ -396,27 +567,55 @@ function CreateSlot() {
           {/* Slot builder */}
           <Card className="mb-5">
             <Card.Header>
-              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Add Time Slots</p>
+              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>
+                Add Time Slots
+              </p>
             </Card.Header>
             <Card.Content>
-              <div style={{ display: "flex", gap: "32px", flexWrap: "wrap", alignItems: "flex-start" }}>
-
+              <div
+                style={{
+                  display: "flex",
+                  gap: "32px",
+                  flexWrap: "wrap",
+                  alignItems: "flex-start",
+                }}
+              >
                 {/* Calendar */}
                 <div style={{ flexShrink: 0 }}>
-                  <p className="text-dark-grey font-semibold text-[0.9rem] mb-2">Pick a Date</p>
+                  <p className="text-dark-grey font-semibold text-[0.9rem] mb-2">
+                    Pick a Date
+                  </p>
                   <CalendarComponent
                     minDate={today}
                     onDateChange={(d) => setPickDate(d)}
+                    scale={calendarScale}
                   />
-                  <p style={{ marginTop: "8px", fontSize: "13px", color: "#507da7" }}>
+                  <p
+                    style={{
+                      marginTop: "8px",
+                      fontSize: "13px",
+                      color: "#507da7",
+                    }}
+                  >
                     {fmtDate(pickDate)}
                   </p>
                 </div>
 
                 {/* Time range + Add button */}
-                <div style={{ flex: 1, minWidth: "240px", display: "flex", flexDirection: "column", gap: "16px", paddingTop: "4px" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: "240px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                    paddingTop: "4px",
+                  }}
+                >
                   <div className="flex flex-col gap-2">
-                    <label className="text-dark-grey font-semibold text-[0.9rem]">Time Range</label>
+                    <label className="text-dark-grey font-semibold text-[0.9rem]">
+                      Time Range
+                    </label>
                     <div className="flex items-center gap-3">
                       <input
                         type="time"
@@ -439,7 +638,6 @@ function CreateSlot() {
                     + Add to Slot List
                   </Button>
                 </div>
-
               </div>
             </Card.Content>
           </Card>
@@ -447,33 +645,75 @@ function CreateSlot() {
           {/* Slot list */}
           <Card className="mb-5">
             <Card.Header>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Proposed Slot Options</p>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>
+                  Proposed Slot Options
+                </p>
                 <span style={{ fontSize: "13px", color: "#8e8e8e" }}>
-                  {slotList.length} option{slotList.length !== 1 ? "s" : ""} added
+                  {slotList.length} option{slotList.length !== 1 ? "s" : ""}{" "}
+                  added
                 </span>
               </div>
             </Card.Header>
             <Card.Content>
               {slotList.length === 0 ? (
-                <p style={{ color: "#8e8e8e", textAlign: "center", padding: "20px 0", fontSize: "14px" }}>
-                  No slots added yet. Pick a date and time above, then click "Add to Slot List".
+                <p
+                  style={{
+                    color: "#8e8e8e",
+                    textAlign: "center",
+                    padding: "20px 0",
+                    fontSize: "14px",
+                  }}
+                >
+                  No slots added yet. Pick a date and time above, then click
+                  "Add to Slot List".
                 </p>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
                   {slotList.map((s) => (
-                    <div key={s.id} style={{
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      padding: "10px 14px", background: "#f7f7f7", borderRadius: "10px",
-                    }}>
+                    <div
+                      key={s.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "10px 14px",
+                        background: "#f7f7f7",
+                        borderRadius: "10px",
+                      }}
+                    >
                       <span style={{ fontSize: "14px" }}>
-                        <strong>{fmtDate(s.date)}</strong>&nbsp;·&nbsp;{s.startTime} – {s.endTime}
+                        <strong>{fmtDate(s.date)}</strong>&nbsp;·&nbsp;
+                        {s.startTime} – {s.endTime}
                       </span>
                       <button
                         onClick={() => removeSlot(s.id)}
                         title="Remove"
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "#bd271d", fontSize: "20px", lineHeight: 1, padding: "0 4px", fontFamily: "inherit" }}
-                      >×</button>
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "#bd271d",
+                          fontSize: "20px",
+                          lineHeight: 1,
+                          padding: "0 4px",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        ×
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -484,23 +724,45 @@ function CreateSlot() {
           {/* Meeting details */}
           <Card className="mb-6">
             <Card.Header>
-              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Meeting Details</p>
+              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>
+                Meeting Details
+              </p>
             </Card.Header>
             <Card.Content>
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "20px",
+                }}
+              >
                 <div className="flex flex-col gap-2">
-                  <label className="text-dark-grey font-semibold text-[0.95rem]">Sequence Name</label>
-                  <input type="text" value={seqName}
+                  <label className="text-dark-grey font-semibold text-[0.95rem]">
+                    Sequence Name
+                  </label>
+                  <input
+                    type="text"
+                    value={seqName}
                     placeholder="e.g. Midterm Review Sessions"
                     className={INPUT_CLS + " w-full"}
-                    onChange={(e) => setSeqName(e.target.value)} />
+                    onChange={(e) => setSeqName(e.target.value)}
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-dark-grey font-semibold text-[0.95rem]">Max Users per Slot</label>
-                  <input type="number" min={1} max={100} value={userCeiling}
+                  <label className="text-dark-grey font-semibold text-[0.95rem]">
+                    Max Users per Slot
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={userCeiling}
                     className={INPUT_CLS + " w-full"}
-                    onChange={(e) => setUserCeiling(e.target.value)} />
-                  <p className="text-[#8e8e8e] text-sm">Applies to every slot in this sequence.</p>
+                    onChange={(e) => setUserCeiling(e.target.value)}
+                  />
+                  <p className="text-dark-grey text-sm">
+                    Applies to every slot in this sequence.
+                  </p>
                 </div>
               </div>
             </Card.Content>
@@ -514,12 +776,20 @@ function CreateSlot() {
           {/* Weekly pattern */}
           <Card className="mb-5">
             <Card.Header>
-              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Weekly Schedule</p>
+              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>
+                Weekly Schedule
+              </p>
             </Card.Header>
             <Card.Content>
-
               {/* Day toggle buttons */}
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "20px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "8px",
+                  flexWrap: "wrap",
+                  marginBottom: "20px",
+                }}
+              >
                 {WEEKDAYS.map(({ label, value }) => {
                   const active = value in dayPattern;
                   return (
@@ -528,8 +798,11 @@ function CreateSlot() {
                       type="button"
                       onClick={() => toggleDay(value)}
                       style={{
-                        padding: "8px 18px", borderRadius: "8px", fontSize: "14px",
-                        fontWeight: 600, cursor: "pointer",
+                        padding: "8px 18px",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        cursor: "pointer",
                         border: `2px solid ${active ? "#507da7" : "#e0e0e0"}`,
                         background: active ? "#507da7" : "transparent",
                         color: active ? "#fff" : "#555",
@@ -545,51 +818,87 @@ function CreateSlot() {
 
               {/* Per-day time inputs */}
               {selectedDayCount > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {WEEKDAYS.filter(({ value }) => value in dayPattern).map(({ label, value }) => (
-                    <div key={value} style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                      <span style={{ width: "36px", fontWeight: 700, fontSize: "14px", color: "#507da7", flexShrink: 0 }}>
-                        {label}
-                      </span>
-                      <input
-                        type="time"
-                        value={dayPattern[value].start}
-                        max={dayPattern[value].end || undefined}
-                        className={INPUT_CLS}
-                        style={{ flex: 1, minWidth: "120px" }}
-                        onChange={(e) => setDayTime(value, "start", e.target.value)}
-                      />
-                      <span className="text-dark-grey font-bold">–</span>
-                      <input
-                        type="time"
-                        value={dayPattern[value].end}
-                        min={dayPattern[value].start || undefined}
-                        className={INPUT_CLS}
-                        style={{ flex: 1, minWidth: "120px" }}
-                        onChange={(e) => setDayTime(value, "end", e.target.value)}
-                      />
-                    </div>
-                  ))}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  {WEEKDAYS.filter(({ value }) => value in dayPattern).map(
+                    ({ label, value }) => (
+                      <div
+                        key={value}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "36px",
+                            fontWeight: 700,
+                            fontSize: "14px",
+                            color: "#507da7",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {label}
+                        </span>
+                        <input
+                          type="time"
+                          value={dayPattern[value].start}
+                          max={dayPattern[value].end || undefined}
+                          className={INPUT_CLS}
+                          style={{ flex: 1, minWidth: "120px" }}
+                          onChange={(e) =>
+                            setDayTime(value, "start", e.target.value)
+                          }
+                        />
+                        <span className="text-dark-grey font-bold">–</span>
+                        <input
+                          type="time"
+                          value={dayPattern[value].end}
+                          min={dayPattern[value].start || undefined}
+                          className={INPUT_CLS}
+                          style={{ flex: 1, minWidth: "120px" }}
+                          onChange={(e) =>
+                            setDayTime(value, "end", e.target.value)
+                          }
+                        />
+                      </div>
+                    ),
+                  )}
                 </div>
               ) : (
                 <p style={{ color: "#8e8e8e", fontSize: "14px" }}>
                   Toggle one or more days above, then set their time ranges.
                 </p>
               )}
-
             </Card.Content>
           </Card>
 
           {/* Recurrence settings */}
           <Card className="mb-5">
             <Card.Header>
-              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>Recurrence</p>
+              <p style={{ fontWeight: 600, fontSize: "15px", margin: 0 }}>
+                Recurrence
+              </p>
             </Card.Header>
             <Card.Content>
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
                 <div className="flex flex-col gap-2">
-                  <label className="text-dark-grey font-semibold text-[0.95rem]">Starting From</label>
+                  <label className="text-dark-grey font-semibold text-[0.95rem]">
+                    Starting From
+                  </label>
                   <input
                     type="date"
                     value={startDateStr}
@@ -600,7 +909,9 @@ function CreateSlot() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-dark-grey font-semibold text-[0.95rem]">Number of Weeks</label>
+                  <label className="text-dark-grey font-semibold text-[0.95rem]">
+                    Number of Weeks
+                  </label>
                   <input
                     type="number"
                     min={1}
@@ -613,9 +924,22 @@ function CreateSlot() {
 
                 {/* Slot preview */}
                 {selectedDayCount > 0 && weeksNum > 0 && (
-                  <div style={{ background: "#f0f5fb", borderRadius: "10px", padding: "12px 16px", fontSize: "14px", color: "#507da7" }}>
-                    📅 Will create&nbsp;<strong>{totalSlots3} slot{totalSlots3 !== 1 ? "s" : ""}</strong>&nbsp;total
-                    &nbsp;({selectedDayCount} day{selectedDayCount !== 1 ? "s" : ""} × {numWeeks} week{weeksNum !== 1 ? "s" : ""})
+                  <div
+                    style={{
+                      background: "#f0f5fb",
+                      borderRadius: "10px",
+                      padding: "12px 16px",
+                      fontSize: "14px",
+                      color: "#507da7",
+                    }}
+                  >
+                    📅 Will create&nbsp;
+                    <strong>
+                      {totalSlots3} slot{totalSlots3 !== 1 ? "s" : ""}
+                    </strong>
+                    &nbsp;total &nbsp;({selectedDayCount} day
+                    {selectedDayCount !== 1 ? "s" : ""} × {numWeeks} week
+                    {weeksNum !== 1 ? "s" : ""})
                   </div>
                 )}
               </div>
@@ -627,7 +951,8 @@ function CreateSlot() {
             <Card.Content>
               <div className="flex flex-col gap-2">
                 <label className="text-dark-grey font-semibold text-[0.95rem]">
-                  Slot Title&nbsp;<span className="font-normal text-[#8e8e8e]">(optional)</span>
+                  Slot Title&nbsp;
+                  <span className="font-normal text-dark-grey">(optional)</span>
                 </label>
                 <input
                   type="text"
@@ -645,13 +970,14 @@ function CreateSlot() {
       {/* Create / Cancel buttons */}
       <div style={{ display: "flex", gap: "12px" }}>
         <Button variant="primary" onClick={handleCreate} disabled={submitting}>
-          {slotKind === "group" ? "Create Sequence & Get Link" : "Create Office Hours"}
+          {slotKind === "group"
+            ? "Create Sequence & Get Link"
+            : "Create Office Hours"}
         </Button>
         <Button variant="ghost" onClick={() => navigate("/dashboard")}>
           Cancel
         </Button>
       </div>
-
     </div>
   );
 }
