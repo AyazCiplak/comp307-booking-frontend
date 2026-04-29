@@ -1,5 +1,6 @@
 // Programmed by Ayaz Ciplak
-const BASE_URL = "http://localhost:8081"; // locally-running backend
+const BASE_URL =
+  "https://railway.com/project/ec71e01a-f840-4a96-b767-ad3827edf4c6?"; // locally-running backend
 
 /**
  * Thin fetch wrapper used by all API modules.
@@ -38,7 +39,8 @@ export async function apiFetch(path: string, options?: RequestInit) {
       // Spring Boot error body: { timestamp, status, error, message, path }
       // "message" is populated when server.error.include-message=always is set.
       const json = JSON.parse(text) as Record<string, unknown>;
-      const serverMsg = typeof json.message === "string" ? json.message.trim() : "";
+      const serverMsg =
+        typeof json.message === "string" ? json.message.trim() : "";
       if (serverMsg) {
         message = serverMsg;
       } else {
@@ -70,9 +72,9 @@ export async function apiFetch(path: string, options?: RequestInit) {
 
 /**
  * Sends a bearer token as a raw text/plain body.
- * 
- * Use this helper for every POST endpoint whose entire body is just a token, 
- * since Spring's StringHttpMessageConverter has issues reading raw bytes with quotes. 
+ *
+ * Use this helper for every POST endpoint whose entire body is just a token,
+ * since Spring's StringHttpMessageConverter has issues reading raw bytes with quotes.
  */
 export function tokenFetch(path: string, token: string): Promise<unknown> {
   return apiFetch(path, {
