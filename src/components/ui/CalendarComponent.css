@@ -116,27 +116,24 @@
 
 /* Month tiles */
 .month-tile {
-  height: calc(60px * var(--calendar-scale));
-  border-radius: calc(12px * var(--calendar-scale));
-  font-size: calc(22px * var(--calendar-scale));
-  font-weight: 600;
-  color: #8b8b8b;
-  background-color: #f5f5f5;
-  transition: all 0.2s;
-  display: flex;
+  flex-basis: 33.3333% !important;
+  max-width: 33.3333% !important;
+  border: calc(6px * var(--calendar-scale)) solid transparent !important;
+  background-clip: padding-box !important;
+  box-sizing: border-box !important;
+  height: calc(
+    100px * var(--calendar-scale)
+  ) !important; /* Slightly taller for months */
+  border-radius: calc(20px * var(--calendar-scale)) !important;
+
+  display: flex !important;
   align-items: center;
   justify-content: center;
-}
-
-.month-tile:hover {
-  background-color: #629dfc !important;
-  color: white;
-}
-
-.month-tile.is-selected {
-  background-color: #629dfc;
-  color: white;
-  font-weight: bold;
+  background-color: transparent !important;
+  font-size: calc(26px * var(--calendar-scale));
+  font-weight: 600;
+  color: #8b8b8b;
+  transition: all 0.2s;
 }
 
 /* year view  */
@@ -153,27 +150,34 @@
 
 /* year tile  */
 .year-tile {
-  height: calc(60px * var(--calendar-scale));
-  border-radius: calc(12px * var(--calendar-scale));
-  font-size: calc(22px * var(--calendar-scale));
-  font-weight: 600;
-  color: #8b8b8b;
-  background-color: #f5f5f5;
-  transition: all 0.2s;
-  display: flex;
+  flex-basis: 33.3333% !important;
+  max-width: 33.3333% !important;
+  border: calc(6px * var(--calendar-scale)) solid transparent !important;
+  background-clip: padding-box !important;
+  box-sizing: border-box !important;
+  height: calc(100px * var(--calendar-scale)) !important;
+  border-radius: calc(20px * var(--calendar-scale)) !important;
+
+  display: flex !important;
   align-items: center;
   justify-content: center;
+  background-color: transparent !important;
+  font-size: calc(26px * var(--calendar-scale));
+  font-weight: 600;
+  color: #8b8b8b;
 }
 
+.month-tile.is-past,
+.year-tile.is-past {
+  background-color: #f0f0f0 !important;
+}
+
+.month-tile.is-selected,
+.year-tile.is-selected,
+.month-tile:hover,
 .year-tile:hover {
   background-color: #629dfc !important;
-  color: white;
-}
-
-.year-tile.is-selected {
-  background-color: #629dfc;
-  color: white;
-  font-weight: bold;
+  color: white !important;
 }
 
 .react-calendar__tile__react-decade-view__years__year {

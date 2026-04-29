@@ -49,38 +49,43 @@ function CalendarComponent({
 
     if (view === "month") {
       const isSelected = isSameDay(date, selectedDate);
-      const isPast = date < today;
-
+      const isPast = date < today; //check if date is in the past
       const isAvailable =
         date.getFullYear() === selectedDate.getFullYear() &&
         date.getMonth() === selectedDate.getMonth() &&
         availableDays.has(date.getDate());
 
       let classes = "day-tile";
-
-      if (isSelected) {
-        classes += " is-selected";
-      } else if (isPast) {
-        classes += " is-past";
-      } else if (isAvailable) {
-        classes += " is-available";
-      }
+      if (isSelected) classes += " is-selected";
+      else if (isPast) classes += " is-past";
+      else if (isAvailable) classes += " is-available";
       return classes;
     }
 
     if (view === "year") {
-      const isCurrentMonth =
+      const isSelected =
         date.getFullYear() === selectedDate.getFullYear() &&
         date.getMonth() === selectedDate.getMonth();
+
+      //check if month is in past
+      const isPast =
+        date.getFullYear() < today.getFullYear() ||
+        (date.getFullYear() === today.getFullYear() &&
+          date.getMonth() < today.getMonth());
+
       let classes = "month-tile";
-      if (isCurrentMonth) classes += " is-selected";
+      if (isSelected) classes += " is-selected";
+      else if (isPast) classes += " is-past";
       return classes;
     }
 
     if (view === "decade") {
-      const isCurrentYear = date.getFullYear() === selectedDate.getFullYear();
+      const isSelected = date.getFullYear() === selectedDate.getFullYear();
+      const isPast = date.getFullYear() < today.getFullYear();
+
       let classes = "year-tile";
-      if (isCurrentYear) classes += " is-selected";
+      if (isSelected) classes += " is-selected";
+      else if (isPast) classes += " is-past";
       return classes;
     }
 
