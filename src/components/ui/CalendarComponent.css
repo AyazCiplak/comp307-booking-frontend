@@ -80,14 +80,23 @@
 
 /* day tiles */
 .day-tile {
-  height: calc(68px * var(--calendar-scale));
-  border-radius: calc(16px * var(--calendar-scale));
+  flex-basis: 14.2857% !important;
+  max-width: 14.2857% !important;
+  border: calc(6px * var(--calendar-scale)) solid transparent !important;
+  background-clip: padding-box !important;
+  box-sizing: border-box !important;
+  height: calc(80px * var(--calendar-scale)) !important;
   font-size: calc(30px * var(--calendar-scale));
-  line-height: calc(68px * var(--calendar-scale));
-  text-align: center;
+  border-radius: calc(24px * var(--calendar-scale)) !important;
+
+  background-color: transparent !important;
+  display: flex !important;
+  align-items: center;
   justify-content: center;
-  color: #8b8b8b;
-  transition: background-color 0.2s;
+}
+
+.day-tile.is-past {
+  background-color: #f0f0f0 !important;
 }
 
 .day-tile.is-selected {

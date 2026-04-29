@@ -44,15 +44,24 @@ function CalendarComponent({
   const [selectedDate, setSelectedDate] = useState<Date>(initial);
 
   const tileClassName: CalendarProps["tileClassName"] = ({ date, view }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     if (view === "month") {
+      const isSelected = isSameDay(date, selectedDate);
+      const isPast = date < today;
+
       const isAvailable =
         date.getFullYear() === selectedDate.getFullYear() &&
         date.getMonth() === selectedDate.getMonth() &&
         availableDays.has(date.getDate());
 
       let classes = "day-tile";
-      if (isSameDay(date, selectedDate)) {
+
+      if (isSelected) {
         classes += " is-selected";
+      } else if (isPast) {
+        classes += " is-past";
       } else if (isAvailable) {
         classes += " is-available";
       }
