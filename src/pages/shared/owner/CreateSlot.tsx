@@ -1,3 +1,4 @@
+// Programmed by Ayaz Ciplak
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CalendarComponent from "../../../components/ui/CalendarComponent.tsx";
@@ -10,7 +11,7 @@ import {
   apiCreateGroupProposalSlot,
 } from "../../../api/booking.ts";
 
-// Shared input style — matches Login / Register form inputs
+// Shared input style - matches Login / Register form inputs
 const INPUT_CLS =
   "py-[15px] px-4 border-[3px] border-dark-grey rounded-xl text-[1.05rem] " +
   "outline-none bg-transparent placeholder:text-dark-grey " +
@@ -192,7 +193,7 @@ function CreateSlot() {
         });
 
         // 2. Create one GROUP_PROPOSAL BookingSlot per time-slot entry (sequential
-        //    to avoid race conditions; only a handful of slots at most)
+        // to avoid race conditions; only a handful of slots at most)
         for (const s of slotList) {
           const y = s.date.getFullYear();
           const mo = String(s.date.getMonth() + 1).padStart(2, "0");

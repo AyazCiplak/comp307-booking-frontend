@@ -1,3 +1,4 @@
+// Programmed by Ayaz Ciplak
 import type { BookingSlot } from "../../types/booking";
 import { useAuth } from "../../context/AuthContext";
 import Card from "../ui/Card";
@@ -5,7 +6,7 @@ import Button from "../ui/Button";
 
 interface BookingSlotCardProps {
   slot: BookingSlot;
-  onBook?:   (slotId: string) => void;
+  onBook?: (slotId: string) => void;
   onCancel?: (slotId: string) => void;
   onDelete?: (slotId: string) => void;
 }
@@ -49,7 +50,7 @@ function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardPr
               {slot.title ?? TYPE_LABEL[slot.type]}
             </h3>
             {/* Only show owner title when the viewer is NOT the owner
-                (e.g. in "My Appointments" — the slot belongs to someone else).
+                (e.g. in "My Appointments" - the slot belongs to someone else).
                 In "My Booking Slots" the owner is always the logged-in user, so it's redundant. */}
             {!isOwner && (
               <span style={{ fontSize: "13px", color: "#8e8e8e" }}>
@@ -82,7 +83,7 @@ function BookingSlotCard({ slot, onBook, onCancel, onDelete }: BookingSlotCardPr
           {TYPE_LABEL[slot.type]}
         </span>
 
-        {/* Who booked it — visible to owners */}
+        {/* Who booked it - visible to owners */}
         {isOwner && slot.bookedByUserName && (
           <p style={{ marginTop: "10px", fontSize: "14px", color: "#8e8e8e" }}>
             Booked by: <strong>{slot.bookedByUserName}</strong> ({slot.bookedByUserEmail})
