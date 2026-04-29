@@ -19,6 +19,8 @@ function Login() {
   const [showValidationError, setShowValidationError] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const redirectTo =
+    sessionStorage.getItem("postLoginRedirect") ?? "/dashboard";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,9 +40,12 @@ function Login() {
       // POST /api/account/login -> LoggedInResponse (email, firstName, lastName, owner, accessToken ...)
       const data = await apiLogin(formData.email, formData.password);
       login(data); // stores user + token in AuthContext + localStorage
-      navigate("/dashboard");
+      sessionStorage.removeItem("postLoginRedirect"); // clear the redirect path after using it once
+      navigate(redirectTo, { replace: true }); // navigate to the intended page after login, default to dashboard
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      setApiError(
+        err instanceof Error ? err.message : "Login failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
