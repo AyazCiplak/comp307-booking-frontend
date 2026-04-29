@@ -80,7 +80,11 @@ function ConfirmGroupTime() {
 
       // Collect attendee emails for the confirmation email
       const attendeeBookings = bookers[String(slot.bookingSlotID)] ?? [];
-      const emails = attendeeBookings.map((b) => b.reservee.email);
+      // Include the owner themselves in the notification email
+      const emails = [
+        ...attendeeBookings.map((b) => b.reservee.email),
+        ...(user?.email ? [user.email] : []),
+      ];
       setConfirmedAttendees(emails);
       setConfirmedSlot(slot);
 

@@ -338,6 +338,19 @@ function CreateSlot() {
         endDateTimes,
         weeksToRepeat: weeksNum,
       });
+      // Send the owner a confirmation email via mailto:
+      const slotTitle = officeTitle.trim() || "Office Hours";
+      const subject = encodeURIComponent(`[BookSoCS] Office Hours Created: ${slotTitle}`);
+      const body = encodeURIComponent(
+        `Hi ${user!.name},\n\n` +
+        `Your office hours "${slotTitle}" have been successfully created on BookSoCS.\n\n` +
+        `Schedule:\n` +
+        `  • ${selectedDayCount} day${selectedDayCount !== 1 ? "s" : ""} per week × ${weeksNum} week${weeksNum !== 1 ? "s" : ""} ` +
+        `= ${totalSlots3} slot${totalSlots3 !== 1 ? "s" : ""} total\n\n` +
+        `Students can now book these slots from your profile on Browse Owners.\n\n` +
+        `Best,\nBookSoCS`,
+      );
+      window.open(`mailto:${user!.email}?subject=${subject}&body=${body}`);
       navigate("/dashboard");
     } catch (err: unknown) {
       setError(
