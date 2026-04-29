@@ -42,6 +42,10 @@ function RequestAppointment() {
     ? `${ownerInfo.firstName} ${ownerInfo.lastName}`
     : ownerEmail;
 
+  console.log("ownerInfo: ", ownerInfo);
+  console.log("ownerEmail: ", ownerEmail);
+  console.log("ownerName: ", ownerName);
+
   // today at midnight — used as minDate on the calendar to block past dates
   const today = (() => {
     const d = new Date();
