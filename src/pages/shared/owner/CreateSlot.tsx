@@ -1,6 +1,6 @@
 // Programmed by Ayaz Ciplak
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import CalendarComponent from "../../../components/ui/CalendarComponent.tsx";
 import Button from "../../../components/ui/Button.tsx";
 import Card from "../../../components/ui/Card.tsx";
@@ -109,6 +109,7 @@ function timesOverlap(s1: string, e1: string, s2: string, e2: string): boolean {
  */
 function CreateSlot() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const calendarScale = useCalendarScale();
 
@@ -119,8 +120,12 @@ function CreateSlot() {
     return d;
   })();
 
+  // Pre-select the tab if navigated from a specific CTA (e.g. Dashboard's "Create Group Meeting")
+  const initialKind: SlotKind =
+    (location.state as { kind?: SlotKind } | null)?.kind ?? "office-hour";
+
   // Shared
-  const [slotKind, setSlotKind] = useState<SlotKind>("office-hour");
+  const [slotKind, setSlotKind] = useState<SlotKind>(initialKind);
   const [error, setError] = useState("");
 
   // Type 2 (group meeting)
