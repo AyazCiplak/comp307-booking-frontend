@@ -1,3 +1,4 @@
+// Programmed by Ayaz Ciplak
 interface CardProps {
   children: React.ReactNode;
   className?: string;
