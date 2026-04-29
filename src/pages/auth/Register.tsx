@@ -67,6 +67,8 @@ function Register() {
   const [invalidEmailError, setInvalidEmailError] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const queryParams = new URLSearchParams(window.location.search);
+  const redirectTo = queryParams.get("redirect") ?? "/dashboard";
 
   // True when the typed email is an owner email (@mcgill.ca, not @mail.mcgill.ca)
   const emailDomain = formData.email.split("@")[1]?.toLowerCase() ?? "";
@@ -85,12 +87,12 @@ function Register() {
     const hasEmptyCore = Object.values(formData).some((v) => v.trim() === "");
 
     // Check owner-specific fields only when relevant
-    const hasEmptyOwnerField = isOwnerEmail && (
-      !department ||
-      (department === "Other" && !customDepartment.trim()) ||
-      !title ||
-      (title === "Other" && !customTitle.trim())
-    );
+    const hasEmptyOwnerField =
+      isOwnerEmail &&
+      (!department ||
+        (department === "Other" && !customDepartment.trim()) ||
+        !title ||
+        (title === "Other" && !customTitle.trim()));
 
     if (hasEmptyCore || hasEmptyOwnerField) {
       setShowValidationError(true);
@@ -109,18 +111,36 @@ function Register() {
     clearErrors();
 
     // Resolve final dept / title values (handle the "Other" free-text case)
-    const finalDept = isOwnerEmail ? (department === "Other" ? customDepartment.trim() : department) : "";
-    const finalTitle = isOwnerEmail ? (title === "Other" ? customTitle.trim() : title) : "";
+    const finalDept = isOwnerEmail
+      ? department === "Other"
+        ? customDepartment.trim()
+        : department
+      : "";
+    const finalTitle = isOwnerEmail
+      ? title === "Other"
+        ? customTitle.trim()
+        : title
+      : "";
 
     setIsLoading(true);
     try {
       // POST /api/account/register -> LoggedInResponse (includes accessToken)
       // Note: firstName / lastName are derived server-side from the email address.
-      const data = await apiRegister(formData.email, formData.password, finalDept, finalTitle);
+      const data = await apiRegister(
+        formData.email,
+        formData.password,
+        finalDept,
+        finalTitle,
+      );
       login(data); // stores user + token in AuthContext + localStorage
-      navigate("/dashboard");
+      sessionStorage.removeItem("postLoginRedirect"); // clear the redirect path after using it once
+      navigate(redirectTo, { replace: true }); //navigate to the intended page, default to dashboard
     } catch (err) {
-      setApiError(err instanceof Error ? err.message : "Registration failed. Please try again.");
+      setApiError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -192,7 +212,9 @@ function Register() {
                 setFormData((prev) => ({ ...prev, email: e.target.value }));
                 clearErrors();
                 // Reset owner fields if the user switches away from @mcgill.ca
-                if (e.target.value.split("@")[1]?.toLowerCase() !== "mcgill.ca") {
+                if (
+                  e.target.value.split("@")[1]?.toLowerCase() !== "mcgill.ca"
+                ) {
                   setDepartment("");
                   setCustomDepartment("");
                   setTitle("");
@@ -217,9 +239,13 @@ function Register() {
                       clearErrors();
                     }}
                   >
-                    <option value="" disabled>Select your department...</option>
+                    <option value="" disabled>
+                      Select your department...
+                    </option>
                     {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
                     ))}
                   </select>
 
@@ -250,9 +276,13 @@ function Register() {
                       clearErrors();
                     }}
                   >
-                    <option value="" disabled>Select your title...</option>
+                    <option value="" disabled>
+                      Select your title...
+                    </option>
                     {TITLES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
                     ))}
                   </select>
 

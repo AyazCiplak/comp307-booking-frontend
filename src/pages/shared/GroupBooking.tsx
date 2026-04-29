@@ -1,4 +1,4 @@
-// Programmed by Ayaz Ciplak
+// Programmed by Ayaz Ciplak, with feature to add
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from "../../components/ui/Button";
@@ -53,7 +53,9 @@ function GroupBooking() {
 
     if (!user?.token) {
       sessionStorage.setItem("postLoginRedirect", `/invite/${inviteToken}`);
-      navigate("/auth/login");
+      navigate(
+        `/auth/login?redirect=${encodeURIComponent(`/invite/${inviteToken}`)}`,
+      );
       return;
     }
 

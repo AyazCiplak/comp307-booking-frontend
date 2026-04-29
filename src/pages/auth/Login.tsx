@@ -19,8 +19,8 @@ function Login() {
   const [showValidationError, setShowValidationError] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const redirectTo =
-    sessionStorage.getItem("postLoginRedirect") ?? "/dashboard";
+  const queryParams = new URLSearchParams(window.location.search);
+  const redirectTo = queryParams.get("redirect") ?? "/dashboard";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,7 +127,7 @@ function Login() {
 
             {/* Case: No account yet */}
             <Link
-              to="/auth/register"
+              to={`/auth/register?redirect=${encodeURIComponent(redirectTo)}`}
               className="inline-block mt-3 text-steel-blue no-underline text-[0.95rem] hover:underline"
             >
               Don't have an account? Register here.
